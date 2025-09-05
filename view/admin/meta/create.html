@@ -1,0 +1,38 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+<h1>{if isset($meta)}Editar Meta{else}Crear Meta{/if}</h1>
+
+{if session('error')}
+<div class="alert alert-danger">{session('error')}</div>
+{/if}
+
+
+<form action="{:url('meta_save')}" method="post" novalidate>
+    <div class="mb-3">
+        <label for="page" class="form-label">Page</label>
+        <input type="text" class="form-control" name="page" id="page" value="" required>
+    </div>
+    <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" name="title" id="title" value="" required>
+    </div>
+    <div class="mb-3">
+        <label for="metatitle" class="form-label">MetaTitle</label>
+        <input type="text" class="form-control" name="metatitle" id="metatitle" value="" required>
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" name="description" id="description"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="keywords" class="form-label">Keywords</label>
+        <input type="text" class="form-control" name="keywords" id="keywords" value="">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear</button>
+<a href="{:url('meta_index')}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+{/block}

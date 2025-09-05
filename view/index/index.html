@@ -1,0 +1,17 @@
+{include file="index/common/header" /}
+
+
+{include file="index/common/alert" /}
+
+{include file="index/common/menu" /}
+
+
+<div>Hello ThinkPHP8</div>
+
+
+{volist name='brands' id='brand'}
+    <li> {$brand.brand_cn}</li>
+{/volist}
+
+
+{include file="index/common/footer" /}

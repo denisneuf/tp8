@@ -1,0 +1,40 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+<h1>Crear Usuario</h1>
+
+{if session('error')}
+<div class="alert alert-danger">{session('error')}</div>
+{/if}
+
+<form action="{:url('user_save')}" method="post" novalidate>
+    {:token_field()}
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" name="username" id="username" required>
+    </div>
+    <div class="mb-3">
+        <label for="password" class="form-label">Contraseña</label>
+        <input type="password" class="form-control" name="password" id="password" required>
+    </div>
+    <div class="mb-3">
+        <label for="nickname" class="form-label">Nickname</label>
+        <input type="text" class="form-control" name="nickname" id="nickname">
+    <div class="mb-3">   
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" id="email">
+    </div>
+    <div class="mb-3">
+        <label for="mobile" class="form-label">Mobile</label>
+        <input type="text" class="form-control" name="mobile" id="mobile">
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="islock" id="islock" value="1">
+        <label class="form-check-label" for="islock">Bloquear usuario</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Crear</button>
+    <a href="{:url('user_index')}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+{/block}

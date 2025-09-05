@@ -1,0 +1,24 @@
+# Composer
+composer.lock
+
+# ThinkPHP
+/runtime/
+/.example
+.env
+.env.production
+.env.testing
+
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Configuración local
+/config/database.php
+/config/app.php
+
+# User
+/database/seeds/UserSeeder.php

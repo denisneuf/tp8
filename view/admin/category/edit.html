@@ -1,0 +1,61 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+<h2>Editar categoría</h2>
+
+{if isset($error)}
+    <div class="alert alert-danger">{$error}</div>
+{/if}
+
+<form action="{:url('category_update', ['id' => $category.id])}" method="post">
+    {:token_field()}
+
+    <div class="mb-3">
+        <label for="bs_icon" class="form-label">Icono Bootstrap</label>
+        <input type="text" class="form-control" name="bs_icon" value="{$category.bs_icon}" placeholder="Ej: laptop">
+    </div>
+
+    <div class="mb-3">
+        <label for="txt_short" class="form-label">Texto corto</label>
+        <input type="text" class="form-control" name="txt_short" value="{$category.txt_short}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="txt_long" class="form-label">Texto largo</label>
+        <input type="text" class="form-control" name="txt_long" value="{$category.txt_long}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="slug" class="form-label">Slug</label>
+        <input type="text" class="form-control" name="slug" value="{$category.slug}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="description" class="form-label">Descripción</label>
+        <textarea class="form-control" name="description" rows="3">{$category.description}</textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="pic" class="form-label">Imagen</label>
+        <input type="text" class="form-control" name="pic" value="{$category.pic}">
+    </div>
+
+    <div class="mb-3">
+        <label for="bg" class="form-label">Fondo</label>
+        <input type="text" class="form-control" name="bg" value="{$category.bg}">
+    </div>
+
+    <div class="mb-3">
+        <label for="visible" class="form-label">Visible</label>
+        <select class="form-select" name="visible">
+            <option value="1" {if $category.visible == 1}selected{/if}>Sí</option>
+            <option value="0" {if $category.visible == 0}selected{/if}>No</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a href="{:url('category_index')}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+{/block}

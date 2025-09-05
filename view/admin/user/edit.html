@@ -1,0 +1,41 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+<h1>Editar Usuario</h1>
+
+{if session('error')}
+<div class="alert alert-danger">{session('error')}</div>
+{/if}
+
+<form action="{:url('user_update', ['id' => $user.id])}" method="post" novalidate>
+    {:token_field()}
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" name="username" id="username" value="{$user.username}" disabled>
+    </div>
+    <div class="mb-3">
+        <label for="password" class="form-label">Nueva contraseña (opcional)</label>
+        <input type="password" class="form-control" name="password" id="password">
+    </div>
+    <div class="mb-3">
+        <label for class="form-label">Nickname</label>
+        <input type="text" class="form-control" name="nickname" id="nickname" value="{$user.nickname}">
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" id="email" value="{$user.email}">
+    </div>
+    <div class="mb-3">
+        <label for="mobile" class="form-label">Mobile</label>
+        <input type="text" class="form-control" name="mobile" id="mobile" value="{$user.mobile}">
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="islock" id="islock" value="1" {if $user.islock}checked{/if}>
+        <label class="form-check-label" for="islock">Bloquear usuario</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{:url('user_index')}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+{/block}

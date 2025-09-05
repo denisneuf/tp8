@@ -1,0 +1,61 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+<div class="container mt-4">
+    <h2>Crear nueva categoría</h2>
+
+    {if isset($error)}
+        <div class="alert alert-danger">{$error}</div>
+    {/if}
+
+    <form action="{:url('category_save')}" method="post">
+        {:token_field()}
+
+        <div class="mb-3">
+            <label for="bs_icon" class="form-label">Icono Bootstrap</label>
+            <input type="text" class="form-control" name="bs_icon" placeholder="Ej: laptop">
+        </div>
+
+        <div class="mb-3">
+            <label for="txt_short" class="form-label">Texto corto</label>
+            <input type="text" class="form-control" name="txt_short" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="txt_long" class="form-label">Texto largo</label>
+            <input type="text" class="form-control" name="txt_long" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="slug" class="form-label">Slug</label>
+            <input type="text" class="form-control" name="slug" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Descripción</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="pic" class="form-label">Imagen</label>
+            <input type="text" class="form-control" name="pic">
+        </div>
+
+        <div class="mb-3">
+            <label for="bg" class="form-label">Fondo</label>
+            <input type="text" class="form-control" name="bg">
+        </div>
+
+        <div class="mb-3">
+            <label for="visible" class="form-label">Visible</label>
+            <select class="form-select" name="visible">
+                <option value="1">Sí</option>
+                <option value="0">No</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Crear categoría</button>
+        <a href="{:url('category_index')}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{/block}

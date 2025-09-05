@@ -1,0 +1,166 @@
+<style>
+
+/* Apple-style menu using Bootstrap 5 */
+
+/* Apple-style menu using Bootstrap 5 */
+
+.main-menu {
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.menu-item {
+    position: relative;
+    padding: 1rem;
+    cursor: pointer;
+}
+
+.menu-title {
+    font-weight: 500;
+    color: #212529;
+}
+
+.menu-item:hover .submenu {
+    display: flex;
+}
+
+
+.menu-item {
+    position: static; /* Cambiado de relative a static */
+}
+
+.submenu {
+    position: fixed; /* Usamos fixed para que se alinee al viewport */
+    top: 60px; /* Ajusta según la altura de tu navbar */
+    left: 0;
+    right: 0;
+    width: 100vw;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 2rem;
+    z-index: 1000;
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+
+/*
+.menu-item:hover .submenu {
+    display: flex;
+}
+
+
+.submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100vw;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 2rem;
+    z-index: 1000;
+    flex-wrap: wrap;
+}
+
+
+.submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 2rem;
+    z-index: 1000;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+*/
+
+
+.menu-column {
+    flex: 1 1 200px;
+    margin: 0 1rem;
+}
+
+.column-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #343a40;
+}
+
+.column-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.column-links li {
+    margin-bottom: 0.25rem;
+}
+
+.column-links a {
+    text-decoration: none;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.column-links a:hover {
+    text-decoration: underline;
+    color: #0d6efd;
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+    .main-menu {
+        flex-direction: column;
+    }
+
+    .submenu {
+        position: static;
+        display: block;
+        box-shadow: none;
+        padding: 0.5rem 0;
+        width: 100%;
+    }
+
+    .menu-column {
+        margin: 0.5rem 0;
+    }
+}
+
+
+</style>
+
+
+<ul class="main-menu">
+    {foreach $menus as $menu}
+    <li class="menu-item">
+        <span class="menu-title">{$menu.title}</span>
+        {if $menu.has_submenu}
+        <div class="submenu">
+            {foreach $menu.columns as $column}
+            <div class="menu-column">
+                <h4 class="column-title">{$column.title}</h4>
+                <ul class="column-links">
+                    {foreach $column.links as $link}
+                    <li><a href="{$link.url}">{$link.title}</a></li>
+                    {/foreach}
+                </ul>
+            </div>
+            {/foreach}
+        </div>
+        {/if}
+    </li>
+    {/foreach}
+</ul>

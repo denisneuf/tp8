@@ -1,0 +1,248 @@
+
+{extend name="admin/layout" /}
+
+{block name="content"}
+<h2>Editar tipo de producto</h2>
+
+
+{if isset($success)}
+    <div class="alert alert-success">{$success}</div>
+{/if}
+{if isset($error)}
+    <div class="alert alert-danger">{$error}</div>
+{/if}
+
+<form action="{:url('product_type_update', ['id' => $productType.id])}" method="post">
+    {:token_field()}
+
+    <div class="mb-3">
+        <label for="name" class="form-label">Nombre</label>
+        <input type="text" class="form-control" name="name" value="{$productType.name}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="slug" class="form-label">Slug</label>
+        <input type="text" class="form-control" name="slug" value="{$productType.slug}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="bs_icon" class="form-label">Icono Bootstrap</label>
+        <input type="text" class="form-control" name="bs_icon" value="{$productType.bs_icon}" placeholder="Ej: laptop">
+    </div>
+
+    <div class="mb-3">
+        <label for="txt_short" class="form-label">Texto corto</label>
+        <input type="text" class="form-control" name="txt_short" value="{$productType.txt_short}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="txt_long" class="form-label">Texto largo</label>
+        <input type="text" class="form-control" name="txt_long" value="{$productType.txt_long}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="description" class="form-label">Descripción</label>
+        <textarea class="form-control" name="description" rows="3">{$productType.description}</textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="pic" class="form-label">Imagen</label>
+        <input type="text" class="form-control" name="pic" value="{$productType.pic}">
+    </div>
+
+    <div class="mb-3">
+        <label for="bg" class="form-label">Fondo</label>
+        <input type="text" class="form-control" name="bg" value="{$productType.bg}">
+    </div>
+
+    <div class="mb-3">
+        <label for="visible" class="form-label">Visible</label>
+        <select class="form-select" name="visible">
+            <option value="1" {if $productType.visible == 1}selected{/if}>Sí</option>
+            <option value="0" {if $productType.visible == 0}selected{/if}>No</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a href="{:url('product_type_index')}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+
+
+<hr class="my-5">
+<div class="mt-5">
+    <h3>Campos Especializados</h3>
+    
+    <!-- Lista de campos existentes -->
+    <div class="mb-4">
+        <h5>Campos actuales:</h5>
+        {if $productType->specialFields && $productType->specialFields->count()}
+            {volist name="productType->specialFields" id="field"}
+            <div class="card mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{$field.name}</strong> 
+                            <span class="text-muted">({$field.slug})</span>
+                            <br>
+                            <small>
+                                Tipo: {$field.data_type} 
+                                {if $field.unit}| Unidad: {$field.unit}{/if}
+                                | Requerido: {if $field.required}Sí{else}No{/if}
+                            </small>
+                        </div>
+                        <div>
+                            <a href="#" 
+                               class="btn btn-sm btn-outline-warning"
+                               data-bs-toggle="modal" 
+                               data-bs-target="#editFieldModal"
+                               data-field-id="{$field.id}"
+                               data-field-name="{$field.name}"
+                               data-field-slug="{$field.slug}"
+                               data-field-data-type="{$field.data_type}"
+                               data-field-unit="{$field.unit}"
+                               data-field-required="{$field.required ? '1' : '0'}">
+                                Editar
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-danger" onclick="event.preventDefault(); if(confirm('¿Eliminar este campo? Se perderán todos sus valores.')) {
+                                    document.getElementById('delete-form-{$field.id}').submit();
+                                }">
+                            Eliminar
+                            </a>
+
+                            <form id="delete-form-{$field.id}" 
+                                  action="{:url('product_type_delete_field', ['id' => $field.id])}" 
+                                  method="post" 
+                                  style="display: none;">
+                                {:token_field()}
+                                <input type="hidden" name="product_type_id" value="{$productType.id}">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/volist}
+        {else}
+            <div class="alert alert-info">
+                No hay campos especializados definidos para este tipo de producto.
+            </div>
+        {/if}
+    </div>
+
+    <!-- Formulario para nuevo campo -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Añadir nuevo campo</h5>
+        </div>
+        <div class="card-body">
+            <form action="{:url('product_type_add_field', ['id' => $productType.id])}" method="post">
+                {:token_field()}
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <input type="text" name="name" class="form-control" placeholder="Nombre" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" name="slug" class="form-control" placeholder="Slug" required>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="data_type" class="form-select" required>
+                            <option value="string">Texto</option>
+                            <option value="integer">Entero</option>
+                            <option value="float">Decimal</option>
+                            <option value="boolean">Booleano</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" name="unit" class="form-control" placeholder="Unidad (opcional)">
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check pt-2">
+                            <input type="checkbox" name="required" value="1" class="form-check-input">
+                            <label class="form-check-label">Requerido</label>
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-success">+</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!-- Modal para editar campo -->
+<div class="modal fade" id="editFieldModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="editFieldForm" method="post">
+      {:token_field()}
+      <!--<input type="hidden" name="product_type_id" value="{$productType.id}">-->
+      <input type="hidden" name="field_id" id="editFieldId">
+      
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Campo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="name" id="editFieldName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Slug</label>
+            <input type="text" name="slug" id="editFieldSlug" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tipo de dato</label>
+            <select name="data_type" id="editFieldDataType" class="form-select" required>
+              <option value="string">Texto</option>
+              <option value="integer">Entero</option>
+              <option value="float">Decimal</option>
+              <option value="boolean">Booleano</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Unidad (opcional)</label>
+            <input type="text" name="unit" id="editFieldUnit" class="form-control">
+          </div>
+          <div class="form-check mb-3">
+            <input type="checkbox" name="required" id="editFieldRequired" value="1" class="form-check-input">
+            <label class="form-check-label">Requerido</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editFieldModal');
+    
+    editModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const form = document.getElementById('editFieldForm');
+        
+        // Llenar el formulario con los datos del campo
+        document.getElementById('editFieldId').value = button.getAttribute('data-field-id');
+        document.getElementById('editFieldName').value = button.getAttribute('data-field-name');
+        document.getElementById('editFieldSlug').value = button.getAttribute('data-field-slug');
+        document.getElementById('editFieldDataType').value = button.getAttribute('data-field-data-type');
+        document.getElementById('editFieldUnit').value = button.getAttribute('data-field-unit');
+        document.getElementById('editFieldRequired').checked = button.getAttribute('data-field-required') === '1';
+        
+        // Setear la acción del formulario
+        form.action = '{:url("product_type_update_field")}?id=' + button.getAttribute('data-field-id');
+    });
+});
+</script>
+
+{/block}

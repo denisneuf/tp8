@@ -1,0 +1,123 @@
+
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+<h1>Marcas</h1>
+
+{if isset($success)}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+  <strong>Éxito:</strong> {$success}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+{/if}
+
+{if isset($error)}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>Error:</strong> {$error}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+{/if}
+
+<a href="{:url('brand_create')}" class="btn btn-success mb-3">Crear Marca</a>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre (EN)</th>
+            <th>Slug</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {volist name="brands" id="brand"}
+        <tr>
+            <td>{$brand.id}</td>
+            <td>{$brand.brand_en}</td>
+            <td>{$brand.slug}</td>
+            <td>{$brand.email}</td>
+            <td>{$brand.telephone}</td>
+            <td>
+                <a href="{:url('brand_edit', ['id' => $brand.id])}" class="btn btn-sm btn-primary">Editar</a>
+
+                {if !$brand.delete_time}
+                    <button type="button" class="btn btn-sm btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#actionModal"
+                        data-id="{$brand.id}"
+                        data-action="delete">
+                        Eliminar
+                    </button>
+                {else}
+                    <button type="button" class="btn btn-sm btn-warning"
+                        data-bs-toggle="modal"
+                        data-bs-target="#actionModal"
+                        data-id="{$brand.id}"
+                        data-action="restore">
+                        Restaurar
+                    </button>
+                {/if}
+            </td>
+        </tr>
+        {/volist}
+    </tbody>
+</table>
+
+{$brands|raw}
+
+<!-- Modal único para eliminar/restaurar -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="actionForm">
+      <input type="hidden" name="__token__" value="{:token()}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="actionModalLabel">Confirmar acción</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="actionModalBody">
+          ¿Estás seguro de que deseas realizar esta acción?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn" id="actionModalSubmit">Aceptar</button>
+        </div>
+    </form>
+  </div>
+</div>
+
+<!-- Script para el modal -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const actionModal = document.getElementById('actionModal');
+    const form = actionModal.querySelector('#actionForm');
+    const title = actionModal.querySelector('#actionModalLabel');
+    const body = actionModal.querySelector('#actionModalBody');
+    const submitBtn = actionModal.querySelector('#actionModalSubmit');
+
+    actionModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const brandId = button.getAttribute('data-id');
+        const actionType = button.getAttribute('data-action');
+
+        if (actionType === 'delete') {
+            title.textContent = 'Confirmar eliminación';
+            body.textContent = '¿Estás seguro de que deseas eliminar esta marca?';
+            submitBtn.textContent = 'Eliminar';
+            submitBtn.className = 'btn btn-danger';
+            form.setAttribute('action', `{:url('brand_delete')}?id=${brandId}`);
+        } else if (actionType === 'restore') {
+            title.textContent = 'Confirmar restauración';
+            body.textContent = '¿Estás seguro de que deseas restaurar esta marca?';
+            submitBtn.textContent = 'Restaurar';
+            submitBtn.className = 'btn btn-warning';
+            form.setAttribute('action', `{:url('brand_restore')}?id=${brandId}`);
+        }
+    });
+});
+</script>
+
+{/block}

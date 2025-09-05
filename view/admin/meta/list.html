@@ -1,0 +1,102 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+
+{if isset($success)}
+
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  <strong>Success</strong> {$success}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{/if} 
+
+
+{if isset($error)}
+
+
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  <strong>Error</strong> {$error}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+{/if}
+
+
+
+<h1>Metas</h1>
+
+
+<a href="{:url('meta_create')}" class="btn btn-success mb-3">Crear Meta</a>
+
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Page</th>
+            <th>Title</th>
+            <!--<th>MetaTitle</th>-->
+            <!--<th>Created</th>-->
+            <th>Updated</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {volist name="metas" id="meta"}
+        <tr>
+            <td>{$meta.id}</td>
+            <td>{$meta.page}</td>
+            <td>{$meta.title}</td>
+            <!--<td>{$meta.metatitle}</td>-->
+            <!--<td>{$meta.create_time}</td>-->
+            <td>{$meta.update_time}</td>
+            <td>
+                <!--<a href="{:url('/admin/meta/edit', ['id'=>$meta.id])}" class="btn btn-sm btn-primary">Editar</a>-->
+
+                <a href="{:url('meta_edit', ['id' => $meta.id])}" class="btn btn-sm btn-primary">Editar</a>
+
+                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{$meta.id}">Eliminar</button>
+
+                <!-- Modal de confirmación -->
+                <div class="modal fade" id="deleteModal{$meta.id}" tabindex="-1" aria-labelledby="deleteModalLabel{$meta.id}" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel{$meta.id}">Confirmar eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                      </div>
+                      <div class="modal-body">
+                        ¿Seguro que quieres eliminar la meta "{$meta.title}"?
+                      </div>
+                      <div class="modal-footer">
+                        <!--<a href="{:url('/admin/meta/delete', ['id'=>$meta.id])}" class="btn btn-sm btn-danger">Eliminar</a>-->
+                        <!--<a href="{:url('meta_delete', ['id' => $meta.id])}" class="btn btn-sm btn-danger">Eliminar</a>-->
+                        <form action="{:url('meta_delete', ['id' => $meta.id])}" method="post" style="display:inline;">
+                            <input type="hidden" name="__token__" value="{:token()}" />
+                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                        </form>
+
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <!--<a href="{:url('/admin/meta/delete', ['id'=>$meta.id])}" class="btn btn-danger">Eliminar</a>-->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+            </td>
+        </tr>
+        {/volist}
+    </tbody>
+</table>
+
+<div class="pagination">
+    {$metas|raw}
+</div>
+
+
+{/block}

@@ -1,0 +1,25 @@
+{volist name="fields" id="field"}
+<div class="form-group">
+    <label>{$field.name} {if $field.required}<span class="text-danger">*</span>{/if}</label>
+    
+    {if $field.data_type == 'string' || $field.data_type == 'integer' || $field.data_type == 'float'}
+        <input type="{if $field.data_type == 'integer' || $field.data_type == 'float'}number{else}text{/if}" 
+               name="special[{$field.id}]" 
+               class="form-control"
+               {if $field.data_type == 'float'}step="0.01"{/if}
+               {if $field.required}required{/if}
+               value="{$values[$field.id] ?? ''}">
+    
+    {elseif $field.data_type == 'boolean'}
+        <select name="special[{$field.id}]" class="form-control" {if $field.required}required{/if}>
+            <option value="">Seleccionar...</option>
+            <option value="1" {if isset($values[$field.id]) && $values[$field.id] == '1'}selected{/if}>Sí</option>
+            <option value="0" {if isset($values[$field.id]) && $values[$field.id] == '0'}selected{/if}>No</option>
+        </select>
+    {/if}
+    
+    {if $field.unit}
+        <small class="text-muted">Unidad: {$field.unit}</small>
+    {/if}
+</div>
+{/volist}

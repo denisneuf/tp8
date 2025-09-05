@@ -1,0 +1,33 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+<h1>Editar Marca</h1>
+
+{if session('error')}
+<div class="alert alert-danger">{session('error')}</div>
+{/if}
+
+<form action="{:url('brand_update', ['id' => $brand.id])}" method="post" novalidate>
+    {:token_field()}
+    <div class="mb-3">
+        <label for="brand_en" class="form-label">Nombre en inglés</label>
+        <input type="text" class="form-control" name="brand_en" id="brand_en" value="{$brand.brand_en}" required>
+    </div>
+    <div class="mb-3">
+        <label for="slug" class="form-label">Slug</label>
+        <input type="text" class="form-control" name="slug" id="slug" value="{$brand.slug}" required>
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" id="email" value="{$brand.email}">
+    </div>
+    <div class="mb-3">
+        <label for="telephone" class="form-label">Teléfono</label>
+        <input type="text" class="form-control" name="telephone" id="telephone" value="{$brand.telephone}">
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{:url('brand_index')}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+{/block}

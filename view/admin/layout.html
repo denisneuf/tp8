@@ -1,0 +1,21 @@
+{include file="admin/common/header" /}
+<body>
+{include file="admin/common/nav" /}
+
+
+    <div class="d-flex">
+        {include file="admin/common/menu" /}
+
+        <div class="flex-grow-1 d-flex flex-column p-4">
+            <!-- Contenido de la página -->
+            <div class="flex-grow-1">
+                {block name="content"}{/block}
+            </div>
+
+            <!-- Footer al final -->
+            {include file="admin/common/footer" /}
+        </div>
+    </div>
+
+</body>
+</html>

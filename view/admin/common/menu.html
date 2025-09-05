@@ -1,0 +1,42 @@
+<style>
+.arrow {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+.arrow.rotate {
+    transform: rotate(90deg); /* flecha hacia abajo */
+}
+</style>
+
+<div class="d-flex flex-column flex-shrink-0 p-3 bg-light" style="width: 250px; height: 100vh;">
+    <h4 class="mb-3"><a href="{:url('admin/dashboard')}">Admin Panel</a></h4>
+    <ul class="nav nav-pills flex-column mb-auto">
+        {foreach name="menuItems" item="links" key="section"}
+        <li class="nav-item mb-2">
+            <a class="nav-link d-flex justify-content-between align-items-center link-dark collapsed {if $activeSection == $section}active{/if}"
+               data-bs-toggle="collapse"
+               href="#submenu-{$section|md5}"
+               role="button"
+               aria-expanded="{if $activeSection == $section}true{else}false{/if}"
+               aria-controls="submenu-{$section|md5}">
+                {$section}
+                <span class="ms-2 arrow {if $activeSection == $section}rotate{/if}" id="arrow-{$section|md5}">▸</span>
+            </a>
+            <ul class="collapse list-unstyled ms-3 mt-1 {if $activeSection == $section}show{/if}" id="submenu-{$section|md5}">
+                {foreach name="links" item="url" key="label"}
+                <li>
+                    <a href="{:url($url)}"
+                       class="nav-link link-dark {if $currentRoute == $url}fw-bold disabled{/if}">
+                        {$label|ucfirst}
+                    </a>
+                </li>
+                {/foreach}
+            </ul>
+        </li>
+        {/foreach}
+    </ul>
+</div>
+
+<script>
+
+</script>

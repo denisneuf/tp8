@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .login-box {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h3 class="text-center mb-4">Administración</h3>
+
+        {if isset($error)}
+        <div class="alert alert-danger">
+            {$error}
+        </div>
+        {/if}
+
+        <form method="post" action="{:url('admin/login')}">
+            {:token_field()}
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuario</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Usuario" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña" required>
+            </div>
+
+
+            {if input('redirect')}
+            <input type="hidden" name="redirect" value="{:input('redirect')}">
+            {/if}
+
+
+            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        </form>
+    </div>
+
+    <script src="/static/js/bootstrap.min.js"></script>
+</body>
+</html>

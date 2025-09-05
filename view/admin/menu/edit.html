@@ -1,0 +1,102 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+{if isset($error)}<div class="alert alert-danger">{$error}</div>{/if}
+
+<form action="{:url('menu_update', ['id' => $menu.id])}" method="post">
+    <input type="hidden" name="__token__" value="{:token()}">
+
+    <div class="mb-3">
+        <label class="form-label">Título del Menú</label>
+        <input type="text" class="form-control" name="title" value="{$menu.title}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">URL del Menú</label>
+        <input type="text" class="form-control" name="url" value="{$menu.url}">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Orden</label>
+        <input type="number" class="form-control" name="order" value="{$menu.order}">
+    </div>
+
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="visible" value="1" {if $menu.visible}checked{/if}>
+        <label class="form-check-label">Visible</label>
+    </div>
+
+    <hr>
+    <h5>Columnas del Menú</h5>
+    <div id="columns-container">
+    {foreach $menu.columns as $i => $column}
+    <div class="column-block border p-3 mb-3">
+        <input type="hidden" name="columns[{$i}][id]" value="{$column.id}">
+        <div class="mb-2">
+            <label class="form-label">Título de la Columna</label>
+            <input type="text" class="form-control" name="columns[{$i}][title]" value="{$column.title}" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Orden</label>
+            <input type="number" class="form-control" name="columns[{$i}][order]" value="{$column.order}">
+        </div>
+        <h6>Enlaces</h6>
+        <div class="links-container">
+            {foreach $column.links as $j => $link}
+            <div class="link-block mb-2">
+                <input type="hidden" name="columns[{$i}][links][{$j}][id]" value="{$link.id}">
+                <input type="text" class="form-control mb-1" name="columns[{$i}][links][{$j}][title]" value="{$link.title}" required>
+                <input type="text" class="form-control mb-1" name="columns[{$i}][links][{$j}][url]" value="{$link.url}">
+                <input type="number" class="form-control mb-1" name="columns[{$i}][links][{$j}][order]" value="{$link.order}">
+            </div>
+            {/foreach}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addLink(this, {$i})">Añadir Enlace</button>
+    </div>
+    {/foreach}
+
+    </div>
+    <button type="button" class="btn btn-outline-primary" onclick="addColumn()">Añadir Columna</button>
+
+    <hr>
+    <button type="submit" class="btn btn-success mt-3">Actualizar Menú</button>
+</form>
+
+<script>
+function addColumn() {
+    const index = document.querySelectorAll('.column-block').length;
+    const container = document.getElementById('columns-container');
+    const columnHTML = `
+        <div class="column-block border p-3 mb-3">
+            <div class="mb-2">
+                <label class="form-label">Título de la Columna</label>
+                <input type="text" class="form-control" name="columns[${index}][title]" required>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Orden</label>
+                <input type="number" class="form-control" name="columns[${index}][order]" value="0">
+            </div>
+            <h6>Enlaces</h6>
+            <div class="links-container"></div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addLink(this, ${index})">Añadir Enlace</button>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', columnHTML);
+}
+
+function addLink(button, columnIndex) {
+    const container = button.previousElementSibling;
+    const linkIndex = container.querySelectorAll('.link-block').length;
+    const linkHTML = `
+        <div class="link-block mb-2">
+            <input type="text" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][title]" placeholder="Título del enlace" required>
+            <input type="text" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][url]" placeholder="URL del enlace">
+            <input type="number" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][order]" placeholder="Orden" value="0">
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', linkHTML);
+}
+</script>
+
+{/block}

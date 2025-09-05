@@ -1,0 +1,117 @@
+
+{extend name="admin/layout" /}
+{block name="content"}
+<h2>Tipos de Producto</h2>
+
+{if isset($success)}
+    <div class="alert alert-success">{$success}</div>
+{/if}
+{if isset($error)}
+    <div class="alert alert-danger">{$error}</div>
+{/if}
+
+<div class="mb-3">
+    <a href="{:url('product_type_create')}" class="btn btn-primary">Crear nuevo tipo</a>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Icono</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Fecha de creación</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {volist name="productTypes" id="type"}
+        <tr>
+            <td>{$type.id}</td>
+            <td><i class="bi bi-{$type.bs_icon}"></i></td>
+            <td>{$type.name}</td>
+            <td>{$type.description}</td>
+            <td>{$type.create_time}</td>
+            <td>
+                <a href="{:url('product_type_edit', ['id' => $type.id])}" class="btn btn-sm btn-warning">Editar</a>
+
+                {if !$type.delete_time}
+                    <button type="button" class="btn btn-sm btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#actionModal"category_edit
+                        data-id="{$type.id}"
+                        data-action="delete">
+                        Eliminar
+                    </button>
+                {else}
+                    <button type="button" class="btn btn-sm btn-warning"
+                        data-bs-toggle="modal"
+                        data-bs-target="#actionModal"
+                        data-id="{$type.id}"
+                        data-action="restore">
+                        Restaurar
+                    </button>
+                {/if}
+            </td>
+        </tr>
+        {/volist}
+    </tbody>
+</table>
+
+<div class="pagination">
+    {$productTypes|raw}
+</div>
+
+<!-- Modal único para eliminar/restaurar -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="actionForm">
+      <input type="hidden" name="__token__" value="{:token()}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="actionModalLabel">Confirmar acción</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="actionModalBody">
+          ¿Estás seguro de que deseas realizar esta acción?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn" id="actionModalSubmit">Aceptar</button>
+        </div>
+    </form>
+  </div>
+</div>
+
+<!-- Script para el modal -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const actionModal = document.getElementById('actionModal');
+    const form = actionModal.querySelector('#actionForm');
+    const title = actionModal.querySelector('#actionModalLabel');
+    const body = actionModal.querySelector('#actionModalBody');
+    const submitBtn = actionModal.querySelector('#actionModalSubmit');
+
+    actionModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const typeId = button.getAttribute('data-id');
+        const actionType = button.getAttribute('data-action');
+
+        if (actionType === 'delete') {
+            title.textContent = 'Confirmar eliminación';
+            body.textContent = '¿Estás seguro de que deseas eliminar este tipo de producto?';
+            submitBtn.textContent = 'Eliminar';
+            submitBtn.className = 'btn btn-danger';
+            form.setAttribute('action', `{:url('product_type_delete')}?id=${typeId}`);
+        } else if (actionType === 'restore') {
+            title.textContent = 'Confirmar restauración';
+            body.textContent = '¿Estás seguro de que deseas restaurar este tipo de producto?';
+            submitBtn.textContent = 'Restaurar';
+            submitBtn.className = 'btn btn-warning';
+            form.setAttribute('action', `{:url('product_type_restore')}?id=${typeId}`);
+        }
+    });
+});
+</script>
+{/block}

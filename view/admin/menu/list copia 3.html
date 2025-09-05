@@ -1,0 +1,139 @@
+{extend name="admin/layout" /}
+
+{block name="content"}
+
+<h2>Listado de Menús</h2>
+<a href="{:url('menu_create')}" class="btn btn-success mb-3">Crear Menu</a>
+
+{if isset($success)}<div class="alert alert-success">{$success}</div>{/if}
+{if isset($error)}<div class="alert alert-danger">{$error}</div>{/if}
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>URL</th>
+            <th>Visible</th>
+            <th>Orden</th>
+            <th>Columnas</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {foreach $menus as $menu}
+        <tr>
+            <td>{$menu.id}</td>
+            <td>{$menu.title}</td>
+            <td>{$menu.url}</td>
+            <td>{if $menu.visible}✔️{/if}</td>
+            <td>{$menu.order}</td>
+            <td>
+                <ul class="list-unstyled">
+                    {foreach $menu.columns as $column}
+                    <li>
+                        <strong>{$column.title}</strong>
+                        <ul>
+                            {foreach $column.links as $link}
+                            <li><a href="{$link.url}" target="_blank">{$link.title}</a></li>
+                            {/foreach}
+                        </ul>
+                    </li>
+                    {/foreach}
+                </ul>
+            </td>
+            <td>
+                <a href="{:url('menu_edit', ['id' => $menu.id])}" class="btn btn-sm btn-primary">Editar</a>
+
+                {if !$menu.delete_time}
+                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{$menu.id}">
+                        Eliminar
+                    </button>
+                {else}
+                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="{$menu.id}">
+                        Restaurar
+                    </button>
+                {/if}
+            </td>
+        </tr>
+        {/foreach}
+    </tbody>
+</table>
+
+{$pagination}
+
+<!-- Modal de eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="deleteForm">
+      <input type="hidden" name="__token__" value="{:token()}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Confirmar eliminación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          ¿Estás seguro de que deseas eliminar este menú?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de restauración -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-labelledby="restoreModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="restoreForm">
+      <input type="hidden" name="__token__" value="{:token()}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="restoreModalLabel">Confirmar restauración</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          ¿Estás seguro de que deseas restaurar este menú?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-warning">Restaurar</button>
+        </div>
+    </form>
+  </div>
+</div>
+
+<!-- Script para ambos modales -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteModal = document.getElementById('deleteModal');
+    const restoreModal = document.getElementById('restoreModal');
+
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const menuId = button.getAttribute('data-id');
+        console.log('🗑️ Modal de eliminación abierto con ID:', menuId);
+        const form = deleteModal.querySelector('#deleteForm');
+        form.setAttribute('action', `{:url('menu_delete')}?id=${menuId}`);
+
+        // Cierra el de restauración si está abierto
+        const restoreInstance = bootstrap.Modal.getInstance(restoreModal);
+        if (restoreInstance) restoreInstance.hide();
+    });
+
+    restoreModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const menuId = button.getAttribute('data-id');
+        console.log('♻️ Modal de restauración abierto con ID:', menuId);
+        const form = restoreModal.querySelector('#restoreForm');
+        form.setAttribute('action', `{:url('menu_restore')}?id=${menuId}`);
+
+        // Cierra el de eliminación si está abierto
+        const deleteInstance = bootstrap.Modal.getInstance(deleteModal);
+        if (deleteInstance) deleteInstance.hide();
+    });
+});
+</script>
+
+{/block}
