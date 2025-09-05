@@ -22,3 +22,4 @@ Thumbs.db
 
 # User
 /database/seeds/UserSeeder.php
+phinx.php
