@@ -17,8 +17,8 @@ composer.lock
 Thumbs.db
 
 # Configuración local
-/config/database.php
-/config/app.php
+# /config/database.php
+# /config/app.php
 
 # User
 /database/seeds/UserSeeder.php
