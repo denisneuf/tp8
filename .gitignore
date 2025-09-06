@@ -8,6 +8,8 @@ composer.lock
 .env.production
 .env.testing
 
+/vendor/
+
 
 # Logs
 *.log
