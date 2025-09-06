@@ -5,11 +5,22 @@
     # Bloquear acceso a archivos sensibles
     RewriteRule ^(\.env|composer\.json|composer\.lock|\.git) - [F,L]
     
-    # Para la raíz principal, no redirigir
-    RewriteRule ^$ - [L]
+    # Excluir la raíz principal de la redirección
+    RewriteCond %{REQUEST_URI} !^/$
     
-    # Para el resto de rutas
+    # Redirigir todo a index.php excepto archivos, directorios y la raíz
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.php?/$1 [L,QSA]
 </IfModule>
+
+# Bloquear acceso directo a archivos sensibles
+<Files "*.env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.json">
+    Order allow,deny
+    Deny from all
+</Files>
