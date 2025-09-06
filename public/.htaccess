@@ -1,17 +1,7 @@
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    
-    # Bloquear acceso a archivos sensibles
-    RewriteRule ^(\.env|composer\.json|composer\.lock|\.git) - [F,L]
-    
-    # Excluir la raíz principal de la redirección
-    RewriteCond %{REQUEST_URI} !^/$
-    
-    # Redirigir todo a index.php excepto archivos, directorios y la raíz
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php?/$1 [L,QSA]
+RewriteEngine on
+RewriteBase /
+RewriteRule ^([a-z]+)\.html$ /index.php?$1 [R,L]
 </IfModule>
 
 # Bloquear acceso directo a archivos sensibles
