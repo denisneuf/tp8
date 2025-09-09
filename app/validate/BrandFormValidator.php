@@ -9,7 +9,7 @@ class BrandFormValidator extends Validate
 {
     protected $rule = [
         'brand_en'          => 'require|max:100|unique:brands',
-        'slug'              => 'require|max:100',
+        'slug'              => 'require|max:100|unique:brands',
         'brand_cn'          => 'max:100',
         'meta_title'        => 'max:255',
         'meta_description'  => 'max:1000',

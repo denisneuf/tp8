@@ -19,9 +19,8 @@
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-circle mr-2"></i>
         <strong>Error:</strong> {$error}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
     </div>
 {/if}
 
@@ -155,7 +154,7 @@
                             {if $brand.block_pic}
                             <div class="mt-3">
                                 <p class="mb-1">Imagen actual:</p>
-                                <img src="/{$brand.block_pic}" alt="Imagen de bloque actual" class="img-thumbnail" style="max-height: 150px;">
+                                <img src="/static/img/brand/{$brand.block_pic}" alt="Imagen de bloque actual" class="img-thumbnail" style="max-height: 150px;">
                                 <input type="hidden" name="existing_block_pic" value="{$brand.block_pic}">
                                 <div class="mt-1">
                                     <button type="button" class="btn btn-sm btn-outline-danger" id="remove-block-pic">
