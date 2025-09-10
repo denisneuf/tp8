@@ -132,6 +132,8 @@
                                 <p class="mb-1">Imagen actual:</p>
                                 <img src="/static/img/brand/{$brand.pic}" alt="Imagen actual" class="img-thumbnail" style="max-height: 150px;">
                                 <input type="hidden" name="existing_pic" value="{$brand.pic}">
+                                <!-- Nuevo campo hidden para controlar eliminación -->
+                                <input type="hidden" name="delete_pic" id="delete_pic_input" value="0">
                                 <div class="mt-1">
                                     <button type="button" class="btn btn-sm btn-outline-danger" id="remove-pic">
                                         <i class="fas fa-trash mr-1"></i>Eliminar imagen
@@ -156,6 +158,8 @@
                                 <p class="mb-1">Imagen actual:</p>
                                 <img src="/static/img/brand/{$brand.block_pic}" alt="Imagen de bloque actual" class="img-thumbnail" style="max-height: 150px;">
                                 <input type="hidden" name="existing_block_pic" value="{$brand.block_pic}">
+                                <!-- Nuevo campo hidden para controlar eliminación -->
+                                <input type="hidden" name="delete_block_pic" id="delete_block_pic_input" value="0">
                                 <div class="mt-1">
                                     <button type="button" class="btn btn-sm btn-outline-danger" id="remove-block-pic">
                                         <i class="fas fa-trash mr-1"></i>Eliminar imagen
@@ -256,6 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Funcionalidad para eliminar imágenes
     document.getElementById('remove-pic')?.addEventListener('click', function() {
+        document.getElementById('delete_pic_input').value = '1';
         document.querySelector('input[name="existing_pic"]').value = '';
         document.querySelector('.custom-file-input[name="pic"]').value = '';
         this.closest('.form-group').querySelector('.img-thumbnail').style.display = 'none';
@@ -263,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.getElementById('remove-block-pic')?.addEventListener('click', function() {
+        document.getElementById('delete_block_pic_input').value = '1';
         document.querySelector('input[name="existing_block_pic"]').value = '';
         document.querySelector('.custom-file-input[name="block_pic"]').value = '';
         this.closest('.form-group').querySelector('.img-thumbnail').style.display = 'none';

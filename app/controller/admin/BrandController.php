@@ -182,12 +182,145 @@ class BrandController extends AdminMenuController
     * @throws \RuntimeException Si ocurre un error durante el procesamiento de imágenes
     * @throws \InvalidArgumentException Si los datos de validación son incorrectos
      */
+
+
     public function update(Request $request, int $id): Redirect
     {
-
         /** @var Brand $brand Instancia de la marca a actualizar */
         $brand = Brand::findOrFail($id);
         $data = $request->post();
+
+        // OBTENER ARCHIVOS AL INICIO (antes de cualquier procesamiento)
+        $file = null;
+        if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
+            $file = $request->file('pic');
+        }
+
+        $bg = null;
+        if (isset($_FILES['block_pic']) && $_FILES['block_pic']['error'] === UPLOAD_ERR_OK) {
+            $bg = $request->file('block_pic');
+        }
+
+        // Definir paths una sola vez
+        $basePath = app()->getRootPath() . 'public/static/img/';
+        $topicPath = $basePath . 'brand/';
+
+        try {
+            // Inicializar campos de eliminación si no existen
+            $data['delete_pic'] = $data['delete_pic'] ?? '0';
+            $data['delete_block_pic'] = $data['delete_block_pic'] ?? '0';
+
+            // Obtener reglas de validación específicas para actualización
+            $rules = $this->getUpdateValidationRules($data, $brand, $id);
+            $this->brandValidator->rule($rules);
+            
+            if (!$this->brandValidator->check($data)) {
+                return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $this->brandValidator->getError());
+            }
+
+            // LÓGICA PARA LA IMAGEN PRINCIPAL (pic)
+            if ($data['delete_pic'] == '1') {
+                // ELIMINAR imagen existente
+                if ($brand->pic && file_exists($topicPath . $brand->pic)) {
+                    $this->imageService->deleteBrandImage($brand->pic, $topicPath);
+                }
+                $data['pic'] = null;
+                
+            } else {
+                // Verificar si hay nuevo archivo (ya obtenido al inicio)
+                if ($file) {
+                    try {
+                        $data['pic'] = $this->imageService->processBrandLogo(
+                            $file, 
+                            $data['brand_en'], 
+                            $brand->pic
+                        );
+                    } catch (\RuntimeException $e) {
+                        return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
+                    }
+                }
+            }
+
+            // LÓGICA PARA LA IMAGEN DE BLOQUE (block_pic)
+            if ($data['delete_block_pic'] == '1') {
+                // ELIMINAR imagen existente
+                if ($brand->block_pic && file_exists($topicPath . $brand->block_pic)) {
+                    $this->imageService->deleteBrandImage($brand->block_pic, $topicPath);
+                }
+                $data['block_pic'] = null;
+                
+            } else {
+                // Verificar si hay nuevo archivo (ya obtenido al inicio)
+                if ($bg) {
+                    try {
+                        $data['block_pic'] = $this->imageService->processBrandBlockImage(
+                            $bg, 
+                            $data['brand_en'], 
+                            $brand->block_pic
+                        );
+                    } catch (\RuntimeException $e) {
+                        return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
+                    }
+                }
+            }
+
+            // Actualizar marca en la base de datos
+            Brand::update($data, ['id' => $id]);
+            return redirect((string) url('brand_index'))->with('success', 'Marca actualizada correctamente.');
+
+        } catch (\InvalidArgumentException $e) {
+            return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
+        }
+    }
+
+    /*
+    public function update(Request $request, int $id): Redirect
+    {
+
+        $brand = Brand::findOrFail($id);
+        $data = $request->post();
+
+
+        // Inicializar campos de eliminación si no existen
+        $data['delete_pic'] = $data['delete_pic'] ?? '0';
+        $data['delete_block_pic'] = $data['delete_block_pic'] ?? '0';
+
+
+        // Procesar eliminación de imágenes
+        if ($data['delete_pic'] == '1') {
+            // Eliminar archivo físico si existe
+
+
+            $basePath = app()->getRootPath() . 'public/static/img/';
+            $topicPath = $basePath . 'brand/';
+
+            if ($brand->pic && file_exists($topicPath . $brand->pic)) {
+                //unlink('static/img/brand/' . $brand->pic);
+                $this->imageService->deleteBrandImage($brand->pic, $topicPath);
+            }
+
+            //$brand->pic = null; // Establecer NULL en base de datos
+            $data['pic'] = null;
+        }
+
+        if ($data['delete_block_pic'] == '1') {
+            // Eliminar archivo físico si existe
+
+
+            $basePath = app()->getRootPath() . 'public/static/img/';
+            $topicPath = $basePath . 'brand/';
+
+            if ($brand->block_pic && file_exists($topicPath . $brand->block_pic)) {
+                //unlink('static/img/brand/' . $brand->pic);
+                $this->imageService->deleteBrandImage($brand->block_pic, $topicPath);
+            }
+
+            //$brand->pic = null; // Establecer NULL en base de datos
+            $data['block_pic'] = null;
+        }        
+
         
         try {
             // Obtener reglas de validación específicas para actualización
@@ -254,6 +387,7 @@ class BrandController extends AdminMenuController
         }
 
     }
+    */
 
     /**
      * Elimina una marca (soft delete)
