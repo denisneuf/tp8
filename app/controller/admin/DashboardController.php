@@ -5,8 +5,9 @@ namespace app\controller\admin;
 
 use think\Request;
 use think\facade\Session;
+use app\BaseController;
 
-class DashboardController extends AdminMenuController
+class DashboardController extends BaseController
 {
     /**
      * 显示资源列表

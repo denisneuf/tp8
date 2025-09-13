@@ -5,6 +5,7 @@ return [
     'alias' => [
         'meta'  => app\middleware\MetaIndex::class,
         'admin'  => app\middleware\AdminAuth::class,
+        'adminmenu' => app\middleware\AdminMenu::class,
 
     ],
     // 优先级设置，此数组中的中间件会按照数组中的顺序优先执行

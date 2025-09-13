@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\controller\admin;
 
+use app\BaseController;
 use think\facade\View;
 use think\Request;
 use think\facade\Session;
@@ -16,7 +17,7 @@ use app\service\MenuService;
 use app\validate\MenuFormValidator;
 
 
-class MenuController extends AdminMenuController
+class MenuController extends BaseController
 {
     public function index()
     {

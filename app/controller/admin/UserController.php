@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\controller\admin;
 
+use app\BaseController;
 use think\facade\View;
 use think\Request;
 use think\facade\Session;
@@ -11,7 +12,7 @@ use app\model\User;
 use think\exception\ValidateException;
 use think\model\concern\SoftDelete;
 
-class UserController extends AdminMenuController
+class UserController extends BaseController
 {
     private function getValidationRules(): array
     {

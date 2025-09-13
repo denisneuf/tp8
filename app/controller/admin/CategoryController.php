@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\controller\admin;
 
+use app\BaseController;
 use think\facade\View;
 use think\facade\Session;
 use think\facade\Validate;
@@ -10,7 +11,7 @@ use think\Request;
 use app\model\Category;
 use app\validate\CategoryFormValidator;
 
-class CategoryController extends AdminMenuController
+class CategoryController extends BaseController
 {
     public function index()
     {

@@ -1,42 +1,127 @@
 <style>
-.arrow {
-    transition: transform 0.3s ease;
-    display: inline-block;
-}
-.arrow.rotate {
-    transform: rotate(90deg); /* flecha hacia abajo */
-}
+/* [Mantener todos los estilos anteriores] */
 </style>
 
-<div class="d-flex flex-column flex-shrink-0 p-3 bg-light" style="width: 250px; height: 100vh;">
-    <h4 class="mb-3"><a href="{:url('admin/dashboard')}">Admin Panel</a></h4>
-    <ul class="nav nav-pills flex-column mb-auto">
-        {foreach name="menuItems" item="links" key="section"}
-        <li class="nav-item mb-2">
-            <a class="nav-link d-flex justify-content-between align-items-center link-dark collapsed {if $activeSection == $section}active{/if}"
-               data-bs-toggle="collapse"
-               href="#submenu-{$section|md5}"
-               role="button"
-               aria-expanded="{if $activeSection == $section}true{else}false{/if}"
-               aria-controls="submenu-{$section|md5}">
-                {$section}
-                <span class="ms-2 arrow {if $activeSection == $section}rotate{/if}" id="arrow-{$section|md5}">▸</span>
-            </a>
-            <ul class="collapse list-unstyled ms-3 mt-1 {if $activeSection == $section}show{/if}" id="submenu-{$section|md5}">
-                {foreach name="links" item="url" key="label"}
-                <li>
-                    <a href="{:url($url)}"
-                       class="nav-link link-dark {if $currentRoute == $url}fw-bold disabled{/if}">
-                        {$label|ucfirst}
-                    </a>
-                </li>
-                {/foreach}
-            </ul>
-        </li>
-        {/foreach}
-    </ul>
+<div class="admin-sidebar">
+    <div class="sidebar-header">
+        <h4><a href="{:url('admin/dashboard')}"><i class="bi bi-speedometer2 me-2"></i>Admin Panel</a></h4>
+        <button class="toggle-sidebar" id="toggleSidebar">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    </div>
+    
+    <div class="sidebar-content px-2 py-3">
+        <ul class="nav flex-column">
+            {foreach name="menuItems" item="links" key="section"}
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {if $activeSection != $section}collapsed{/if}"
+                   data-bs-toggle="collapse"
+                   href="#submenu-{$section|md5}"
+                   role="button"
+                   aria-expanded="{if $activeSection == $section}true{else}false{/if}"
+                   aria-controls="submenu-{$section|md5}">
+                    <div class="d-flex align-items-center">
+                        <i class="bi {$menuIcons[$section]}"></i>
+                        <span class="nav-text">{$section}</span>
+                    </div>
+                    <span class="arrow {if $activeSection == $section}rotate{/if}">▸</span>
+                </a>
+                
+                <div class="collapse submenu {if $activeSection == $section}show{/if}" id="submenu-{$section|md5}">
+                    <ul class="nav flex-column">
+                        {foreach name="links" item="url" key="label"}
+                        <li class="nav-item">
+                            <a href="{:url($url)}"
+                               class="nav-link {if $currentRoute == $url}disabled{/if}">
+                                <span class="nav-text">{$label|ucfirst}</span>
+                            </a>
+                        </li>
+                        {/foreach}
+                    </ul>
+                </div>
+            </li>
+            {/foreach}
+        </ul>
+    </div>
+</div>
+
+<!-- [Mantener el resto del código JavaScript] -->
+
+<div class="mobile-menu-toggle d-lg-none">
+    <i class="bi bi-list"></i>
 </div>
 
 <script>
-
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.querySelector('.admin-sidebar');
+    const toggleButton = document.getElementById('toggleSidebar');
+    const mainContent = document.querySelector('.main-content');
+    
+    // Verificar si hay una preferencia guardada
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    
+    // Aplicar el estado guardado
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+        if (mainContent) mainContent.classList.add('menu-collapsed');
+    }
+    
+    // Manejar el clic en el botón de toggle
+    if (toggleButton) {
+        toggleButton.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            if (mainContent) mainContent.classList.toggle('menu-collapsed');
+            
+            // Guardar preferencia
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+    }
+    
+    // Manejar el estado activo de los elementos del menú
+    const currentRoute = "{$currentRoute}";
+    const navLinks = document.querySelectorAll('.admin-sidebar .nav-link');
+    
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentRoute) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Toggle para móviles
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+    
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('mobile-show');
+            
+            // Si estamos en móvil y el menú está colapsado, expandirlo al hacer toggle
+            if (window.innerWidth < 768 && sidebar.classList.contains('collapsed')) {
+                sidebar.classList.remove('collapsed');
+                if (mainContent) mainContent.classList.remove('menu-collapsed');
+                localStorage.setItem('sidebarCollapsed', 'false');
+            }
+        });
+    }
+    
+    // Mejorar la accesibilidad
+    const menuItems = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    menuItems.forEach(item => {
+        item.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+    
+    // Cerrar menús al hacer clic fuera (solo para móviles)
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth < 768 && 
+            sidebar.classList.contains('mobile-show') && 
+            !sidebar.contains(e.target) && 
+            !menuToggle.contains(e.target)) {
+            sidebar.classList.remove('mobile-show');
+        }
+    });
+});
 </script>

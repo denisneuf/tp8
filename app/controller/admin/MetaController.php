@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\controller\admin;
 
+use app\BaseController;
 use think\facade\View;
 use think\Request;
 use think\facade\Db;
@@ -12,9 +13,7 @@ use think\facade\Session;
 use think\exception\PDOException;
 use think\db\exception\DuplicateException;
 
-
-
-class MetaController extends AdminMenuController
+class MetaController extends BaseController
 {
     // Mostrar listado
 

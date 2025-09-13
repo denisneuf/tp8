@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\controller\admin;
 
+use app\BaseController;
 use think\facade\View;
 use think\facade\Session;
 use think\Request;
@@ -13,7 +14,7 @@ use app\model\ProductSpecialValue;
 use app\validate\ProductTypeFormValidator;
 use app\validate\ProductTypeSpecialFieldValidator;
 
-class ProductTypeController extends AdminMenuController
+class ProductTypeController extends BaseController
 {
     public function index()
     {

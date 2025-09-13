@@ -29,7 +29,7 @@ Route::group('admin', function () {
     // Aquí luego añadirías otras rutas de admin, por ejemplo Meta
     // Route::resource('meta', 'admin/MetaController');
 
-    Route::get('/dashboard', 'app\controller\admin\DashboardController@index')->middleware('admin');
+    Route::get('/dashboard', 'app\controller\admin\DashboardController@index')->middleware('admin')->middleware('adminmenu');
     
 });
 
@@ -46,7 +46,7 @@ Route::group('admin/meta', function () {
     Route::post('delete', 'app\controller\admin\MetaController@delete')
     ->pattern(['id' => '\d+'])
     ->name('meta_delete');
-})->middleware('admin');
+})->middleware('admin')->middleware('adminmenu');
 
 Route::group('admin/user', function () {
     Route::get('/', 'app\controller\admin\UserController@index')->name('user_index');        // Listado
@@ -59,7 +59,7 @@ Route::group('admin/user', function () {
     Route::post('restore', 'app\controller\admin\UserController@restore')
     ->pattern(['id' => '\d+'])
     ->name('user_restore');
-})->middleware('admin');
+})->middleware('admin')->middleware('adminmenu');
 
 
 
@@ -72,7 +72,7 @@ Route::group('admin/menu', function () {
     Route::post('update', 'app\controller\admin\MenuController@update')->pattern(['id' => '\d+'])->name('menu_update');
     Route::post('delete', 'app\controller\admin\MenuController@delete')->pattern(['id' => '\d+'])->name('menu_delete');
     Route::post('restore', 'app\controller\admin\MenuController@restore')->pattern(['id' => '\d+'])->name('menu_restore');
-})->middleware('admin');
+})->middleware('admin')->middleware('adminmenu');
 
 Route::group('admin/brand', function () {
     Route::get('/', 'app\controller\admin\BrandController@index')->name('brand_index');
@@ -83,7 +83,7 @@ Route::group('admin/brand', function () {
     Route::post('update', 'app\controller\admin\BrandController@update')->pattern(['id' => '\d+'])->name('brand_update');
     Route::post('delete', 'app\controller\admin\BrandController@delete')->pattern(['id' => '\d+'])->name('brand_delete');
     Route::post('restore', 'app\controller\admin\BrandController@restore')->pattern(['id' => '\d+'])->name('brand_restore');
-})->middleware('admin');
+})->middleware('admin')->middleware('adminmenu');
 
 
 Route::group('admin/category', function () {
@@ -95,7 +95,7 @@ Route::group('admin/category', function () {
     Route::post('update', 'app\controller\admin\CategoryController@update')->pattern(['id' => '\d+'])->name('category_update');
     Route::post('delete', 'app\controller\admin\CategoryController@delete')->pattern(['id' => '\d+'])->name('category_delete');
     Route::post('restore', 'app\controller\admin\CategoryController@restore')->pattern(['id' => '\d+'])->name('category_restore');
-})->middleware('admin');
+})->middleware('admin')->middleware('adminmenu');
 
 Route::group('admin/product_type', function () {
     Route::get('/', 'app\controller\admin\ProductTypeController@index')->name('product_type_index');
@@ -109,7 +109,7 @@ Route::group('admin/product_type', function () {
     Route::post('update_field', 'app\controller\admin\ProductTypeController@updateField')->pattern(['id' => '\\d+'])->name('product_type_update_field');
     Route::post('delete', 'app\controller\admin\ProductTypeController@delete')->pattern(['id' => '\\d+'])->name('product_type_delete');
     Route::post('restore', 'app\controller\admin\ProductTypeController@restore')->pattern(['id' => '\\d+'])->name('product_type_restore');
-})->middleware('admin');
+})->middleware('admin')->middleware('adminmenu');
 
 
 
@@ -123,7 +123,7 @@ Route::group('admin/product', function () {
     Route::post('delete', 'app\controller\admin\ProductController@delete')->pattern(['id' => '\d+'])->name('product_delete');
     Route::post('restore', 'app\controller\admin\ProductController@restore')->pattern(['id' => '\d+'])->name('product_restore');
     Route::get('get-special-fields', 'app\controller\admin\ProductController@getSpecialFields')->name('product_get_special_fields');
-})->middleware('admin');
+})->middleware('admin')->middleware('adminmenu');
 
 
 

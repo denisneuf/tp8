@@ -1,6 +1,7 @@
 <?php
 namespace app\controller\admin;
 
+use app\BaseController;
 use think\facade\View;
 use think\Request;
 use app\model\Product;
@@ -14,7 +15,7 @@ use think\facade\Session;
 use think\facade\Filesystem;
 use think\Image;
 
-class ProductController extends AdminMenuController
+class ProductController extends BaseController
 {
     public function index()
     {

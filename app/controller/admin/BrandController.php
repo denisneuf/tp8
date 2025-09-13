@@ -13,13 +13,14 @@ use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use app\service\ImageService;
 use think\response\Redirect;
+use app\BaseController;
 
 /**
  * Controlador para la gestión de marcas en el panel de administración
  * 
  * @package app\controller\admin
  */
-class BrandController extends AdminMenuController
+class BrandController extends BaseController
 {
     /**
      * @var BrandFormValidator
@@ -29,6 +30,9 @@ class BrandController extends AdminMenuController
      * @var ImageService
      */
     protected ImageService $imageService;
+    /**
+     * @var AdminMenuService
+     */
 
     /**
      * Constructor del controlador
@@ -58,10 +62,20 @@ class BrandController extends AdminMenuController
             'query'     => request()->param(),
         ]);
 
+        //$menuData = $this->menuService->getMenuData();
+        //View::assign('menuItems', $menuData['menuItems']);
+        //View::assign('brands', $brands);
+        //View::assign('success', $successMessage);
+        //View::assign('error', $errorMessage);
 
-        View::assign('brands', $brands);
-        View::assign('success', $successMessage);
-        View::assign('error', $errorMessage);
+
+        View::assign([
+            'brands' => $brands,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
+
+
         return View::fetch('admin/brand/list');
     }
 
