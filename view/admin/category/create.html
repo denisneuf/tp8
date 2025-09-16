@@ -1,61 +1,76 @@
 {extend name="admin/layout" /}
 
 {block name="content"}
-<div class="container mt-4">
-    <h2>Crear nueva categoría</h2>
 
+    <!-- Alertas de notificación -->
     {if isset($error)}
-        <div class="alert alert-danger">{$error}</div>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     {/if}
 
-    <form action="{:url('category_save')}" method="post">
-        {:token_field()}
 
-        <div class="mb-3">
-            <label for="bs_icon" class="form-label">Icono Bootstrap</label>
-            <input type="text" class="form-control" name="bs_icon" placeholder="Ej: laptop">
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-edit me-2"></i>Crear Nueva Categoría
+            </h6>
+            <a href="{:url('category_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
         </div>
+        <div class="card-body">
+            <form action="{:url('category_save')}" method="post">
+                {:token_field()}
 
-        <div class="mb-3">
-            <label for="txt_short" class="form-label">Texto corto</label>
-            <input type="text" class="form-control" name="txt_short" required>
+                <div class="mb-3">
+                    <label for="bs_icon" class="form-label">Icono Bootstrap</label>
+                    <input type="text" class="form-control" name="bs_icon" placeholder="Ej: laptop">
+                </div>
+
+                <div class="mb-3">
+                    <label for="txt_short" class="form-label">Texto corto</label>
+                    <input type="text" class="form-control" name="txt_short" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="txt_long" class="form-label">Texto largo</label>
+                    <input type="text" class="form-control" name="txt_long" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="slug" class="form-label">Slug</label>
+                    <input type="text" class="form-control" name="slug" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Descripción</label>
+                    <textarea class="form-control" name="description" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="pic" class="form-label">Imagen</label>
+                    <input type="text" class="form-control" name="pic">
+                </div>
+
+                <div class="mb-3">
+                    <label for="bg" class="form-label">Fondo</label>
+                    <input type="text" class="form-control" name="bg">
+                </div>
+
+                <div class="mb-3">
+                    <label for="visible" class="form-label">Visible</label>
+                    <select class="form-select" name="visible">
+                        <option value="1">Sí</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                <a href="{:url('category_index')}" class="btn btn-secondary">Cancelar</a>
+            </form>
         </div>
-
-        <div class="mb-3">
-            <label for="txt_long" class="form-label">Texto largo</label>
-            <input type="text" class="form-control" name="txt_long" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="slug" class="form-label">Slug</label>
-            <input type="text" class="form-control" name="slug" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="description" class="form-label">Descripción</label>
-            <textarea class="form-control" name="description" rows="3"></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label for="pic" class="form-label">Imagen</label>
-            <input type="text" class="form-control" name="pic">
-        </div>
-
-        <div class="mb-3">
-            <label for="bg" class="form-label">Fondo</label>
-            <input type="text" class="form-control" name="bg">
-        </div>
-
-        <div class="mb-3">
-            <label for="visible" class="form-label">Visible</label>
-            <select class="form-select" name="visible">
-                <option value="1">Sí</option>
-                <option value="0">No</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-success">Crear categoría</button>
-        <a href="{:url('category_index')}" class="btn btn-secondary">Cancelar</a>
-    </form>
-</div>
+    </div>
 {/block}

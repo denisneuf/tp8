@@ -62,13 +62,6 @@ class BrandController extends BaseController
             'query'     => request()->param(),
         ]);
 
-        //$menuData = $this->menuService->getMenuData();
-        //View::assign('menuItems', $menuData['menuItems']);
-        //View::assign('brands', $brands);
-        //View::assign('success', $successMessage);
-        //View::assign('error', $errorMessage);
-
-
         View::assign([
             'brands' => $brands,
             'success' => $successMessage,
@@ -76,7 +69,7 @@ class BrandController extends BaseController
         ]);
 
 
-        return View::fetch('admin/brand/list');
+        return View::fetch('/admin/brand/list');
     }
 
     /**
@@ -86,7 +79,7 @@ class BrandController extends BaseController
      */
     public function create(): string
     {
-        return View::fetch('admin/brand/create');
+        return View::fetch('/admin/brand/create');
     }
 
     /**

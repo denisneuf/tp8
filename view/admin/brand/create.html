@@ -2,32 +2,49 @@
 
 {block name="content"}
 
-<h1>Crear Marca</h1>
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
-{if session('error')}
-<div class="alert alert-danger">{session('error')}</div>
-{/if}
 
-<form action="{:url('brand_save')}" method="post" novalidate>
-    {:token_field()}
-    <div class="mb-3">
-        <label for="brand_en" class="form-label">Nombre en inglés</label>
-        <input type="text" class="form-control" name="brand_en" id="brand_en" required>
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-edit me-2"></i>Crear Nueva Marca
+            </h6>
+            <a href="{:url('brand_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{:url('brand_save')}" method="post" novalidate>
+                {:token_field()}
+                <div class="mb-3">
+                    <label for="brand_en" class="form-label">Nombre en inglés</label>
+                    <input type="text" class="form-control" name="brand_en" id="brand_en" required>
+                </div>
+                <div class="mb-3">
+                    <label for="slug" class="form-label">Slug</label>
+                    <input type="text" class="form-control" name="slug" id="slug" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" id="email">
+                </div>
+                <div class="mb-3">
+                    <label for="telephone" class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" name="telephone" id="telephone">
+                </div>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                <a href="{:url('brand_index')}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
     </div>
-    <div class="mb-3">
-        <label for="slug" class="form-label">Slug</label>
-        <input type="text" class="form-control" name="slug" id="slug" required>
-    </div>
-    <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" name="email" id="email">
-    </div>
-    <div class="mb-3">
-        <label for="telephone" class="form-label">Teléfono</label>
-        <input type="text" class="form-control" name="telephone" id="telephone">
-    </div>
-    <button type="submit" class="btn btn-primary">Crear</button>
-    <a href="{:url('brand_index')}" class="btn btn-secondary">Cancelar</a>
-</form>
 
 {/block}

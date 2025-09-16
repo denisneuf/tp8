@@ -2,65 +2,79 @@
 
 {block name="content"}
 
-<h2>Categorías</h2>
+    {if isset($success)}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Éxito:</strong> {$success}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
 
-{if isset($success)}
-    <div class="alert alert-success">{$success}</div>
-{/if}
-{if isset($error)}
-    <div class="alert alert-danger">{$error}</div>
-{/if}
+    {if isset($error)}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>Error:</strong> {$error}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
 
-<div class="mb-3">
-    <a href="{:url('category_create')}" class="btn btn-primary">Crear nueva categoría</a>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-edit me-2"></i>Listado de Categorías
+            </h6>
+            <a href="{:url('category_create')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-plus-square me-2"></i>Crear Categoría
+            </a>
+        </div>
+        <div class="card-body">
+
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Icono</th>
+                        <th>Texto corto</th>
+                        <th>Texto largo</th>
+                        <th>Slug</th>
+                        <th>Visible</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="categories" id="category"}
+                    <tr>
+                        <td>{$category.id}</td>
+                        <td><i class="bi bi-{$category.bs_icon}"></i></td>
+                        <td>{$category.txt_short}</td>
+                        <td>{$category.txt_long}</td>
+                        <td>{$category.slug}</td>
+                        <td>{if $category.visible}Sí{else}No{/if}</td>
+                        <td>
+                            <a href="{:url('category_edit', ['id' => $category.id])}" class="btn btn-sm btn-primary">Editar</a>
+
+                            {if !$category.delete_time}
+                                <button type="button" class="btn btn-sm btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#actionModal"
+                                    data-id="{$category.id}"
+                                    data-action="delete">
+                                    Eliminar
+                                </button>
+                            {else}
+                                <button type="button" class="btn btn-sm btn-warning"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#actionModal"
+                                    data-id="{$category.id}"
+                                    data-action="restore">
+                                    Restaurar
+                                </button>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
 </div>
-
-<table class="table table-bordered table-hover">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Icono</th>
-            <th>Texto corto</th>
-            <th>Texto largo</th>
-            <th>Slug</th>
-            <th>Visible</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {volist name="categories" id="category"}
-        <tr>
-            <td>{$category.id}</td>
-            <td><i class="bi bi-{$category.bs_icon}"></i></td>
-            <td>{$category.txt_short}</td>
-            <td>{$category.txt_long}</td>
-            <td>{$category.slug}</td>
-            <td>{if $category.visible}Sí{else}No{/if}</td>
-            <td>
-                <a href="{:url('category_edit', ['id' => $category.id])}" class="btn btn-sm btn-warning">Editar</a>
-
-                {if !$category.delete_time}
-                    <button type="button" class="btn btn-sm btn-danger"
-                        data-bs-toggle="modal"
-                        data-bs-target="#actionModal"
-                        data-id="{$category.id}"
-                        data-action="delete">
-                        Eliminar
-                    </button>
-                {else}
-                    <button type="button" class="btn btn-sm btn-warning"
-                        data-bs-toggle="modal"
-                        data-bs-target="#actionModal"
-                        data-id="{$category.id}"
-                        data-action="restore">
-                        Restaurar
-                    </button>
-                {/if}
-            </td>
-        </tr>
-        {/volist}
-    </tbody>
-</table>
 
 <div class="pagination">
     {$categories|raw}

@@ -1,72 +1,87 @@
-
 {extend name="admin/layout" /}
 
 {block name="content"}
 
-<h1>Marcas</h1>
 
-{if isset($success)}
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-  <strong>Éxito:</strong> {$success}
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+
+
+    {if isset($success)}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Éxito:</strong> {$success}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
+
+    {if isset($error)}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>Error:</strong> {$error}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
+
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-edit me-2"></i>Listado de Marcas
+            </h6>
+            <a href="{:url('brand_create')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-plus-square me-2"></i>Crear Marca
+            </a>
+        </div>
+
+    <div class="card-body">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre (EN)</th>
+                    <th>Slug</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="brands" id="brand"}
+                <tr>
+                    <td>{$brand.id}</td>
+                    <td>{$brand.brand_en}</td>
+                    <td>{$brand.slug}</td>
+                    <td>{$brand.email}</td>
+                    <td>{$brand.telephone}</td>
+                    <td>
+                        <a href="{:url('brand_edit', ['id' => $brand.id])}" class="btn btn-sm btn-primary">Editar</a>
+
+                        {if !$brand.delete_time}
+                            <button type="button" class="btn btn-sm btn-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#actionModal"
+                                data-id="{$brand.id}"
+                                data-action="delete">
+                                Eliminar
+                            </button>
+                        {else}
+                            <button type="button" class="btn btn-sm btn-warning"
+                                data-bs-toggle="modal"
+                                data-bs-target="#actionModal"
+                                data-id="{$brand.id}"
+                                data-action="restore">
+                                Restaurar
+                            </button>
+                        {/if}
+                    </td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+    </div>
 </div>
-{/if}
 
-{if isset($error)}
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-  <strong>Error:</strong> {$error}
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-</div>
-{/if}
 
-<a href="{:url('brand_create')}" class="btn btn-success mb-3">Crear Marca</a>
-
-<table class="table table-bordered table-hover">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nombre (EN)</th>
-            <th>Slug</th>
-            <th>Email</th>
-            <th>Teléfono</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {volist name="brands" id="brand"}
-        <tr>
-            <td>{$brand.id}</td>
-            <td>{$brand.brand_en}</td>
-            <td>{$brand.slug}</td>
-            <td>{$brand.email}</td>
-            <td>{$brand.telephone}</td>
-            <td>
-                <a href="{:url('brand_edit', ['id' => $brand.id])}" class="btn btn-sm btn-primary">Editar</a>
-
-                {if !$brand.delete_time}
-                    <button type="button" class="btn btn-sm btn-danger"
-                        data-bs-toggle="modal"
-                        data-bs-target="#actionModal"
-                        data-id="{$brand.id}"
-                        data-action="delete">
-                        Eliminar
-                    </button>
-                {else}
-                    <button type="button" class="btn btn-sm btn-warning"
-                        data-bs-toggle="modal"
-                        data-bs-target="#actionModal"
-                        data-id="{$brand.id}"
-                        data-action="restore">
-                        Restaurar
-                    </button>
-                {/if}
-            </td>
-        </tr>
-        {/volist}
-    </tbody>
-</table>
-
+<div class="pagination">
 {$brands|raw}
+</div>
 
 <!-- Modal único para eliminar/restaurar -->
 <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
@@ -88,6 +103,9 @@
     </form>
   </div>
 </div>
+
+
+
 
 <!-- Script para el modal -->
 <script>

@@ -2,60 +2,166 @@
 
 {block name="content"}
 
-<h2>Editar categoría</h2>
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 
-{if isset($error)}
-    <div class="alert alert-danger">{$error}</div>
-{/if}
+        </div>
+    {/if}
 
-<form action="{:url('category_update', ['id' => $category.id])}" method="post">
-    {:token_field()}
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-edit me-2"></i>Editando: {$category.txt_short|default='Nueva Categoría'}
+            </h6>
+            <a href="{:url('brand_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{:url('category_update', ['id' => $category.id])}" method="post" novalidate enctype="multipart/form-data">
+                {:token_field()}
+                
+                <!-- Información Básica -->
+                <div class="mb-3">
+                    <label for="txt_short" class="form-label">Texto corto *</label>
+                    <input type="text" class="form-control" name="txt_short" id="txt_short" 
+                           value="{$category.txt_short|default=''}" required>
+                    <div class="form-text">Nombre principal de la categoría</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="txt_long" class="form-label">Texto largo *</label>
+                    <input type="text" class="form-control" name="txt_long" id="txt_long" 
+                           value="{$category.txt_long|default=''}" required>
+                    <div class="form-text">Nombre completo de la categoría</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="slug" class="form-label">Slug *</label>
+                    <input type="text" class="form-control" name="slug" id="slug" 
+                           value="{$category.slug|default=''}" required>
+                    <div class="form-text">Identificador único para URLs</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Descripción</label>
+                    <textarea class="form-control" name="description" id="description" rows="3">{$category.description|default=''}</textarea>
+                    <div class="form-text">Descripción detallada de la categoría</div>
+                </div>
 
-    <div class="mb-3">
-        <label for="bs_icon" class="form-label">Icono Bootstrap</label>
-        <input type="text" class="form-control" name="bs_icon" value="{$category.bs_icon}" placeholder="Ej: laptop">
+                <!-- Imágenes -->
+                <h5 class="mt-4 mb-3 border-bottom pb-2">
+                    <i class="fas fa-images me-2"></i>Imágenes de la Categoría
+                </h5>
+                
+                <div class="mb-3">
+                    <label for="pic" class="form-label">Imagen Principal</label>
+                    <input type="file" class="form-control" name="pic" id="pic" accept="image/*">
+                    <div class="form-text">Imagen cuadrada (mín. 800×800px)</div>
+                    
+                    {if $category.pic}
+                    <div class="mt-3">
+                        <p class="mb-1">Imagen actual:</p>
+                        <img src="/static/img/category/{$category.pic}" alt="Imagen actual" class="img-thumbnail" style="max-height: 150px;">
+                        <input type="hidden" name="existing_pic" value="{$category.pic}">
+                        <input type="hidden" name="delete_pic" id="delete_pic_input" value="0">
+                        <div class="mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="remove-pic">
+                                <i class="fas fa-trash me-1"></i>Eliminar imagen
+                            </button>
+                        </div>
+                    </div>
+                    {/if}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="block_pic" class="form-label">Imagen de Bloque/Banner</label>
+                    <input type="file" class="form-control" name="block_pic" id="block_pic" accept="image/*">
+                    <div class="form-text">Relación 2:1 recomendada (ej. 1200×600px)</div>
+                    
+                    {if $category.block_pic}
+                    <div class="mt-3">
+                        <p class="mb-1">Imagen actual:</p>
+                        <img src="/static/img/category/{$category.block_pic}" alt="Imagen de bloque actual" class="img-thumbnail" style="max-height: 150px;">
+                        <input type="hidden" name="existing_block_pic" value="{$category.block_pic}">
+                        <input type="hidden" name="delete_block_pic" id="delete_block_pic_input" value="0">
+                        <div class="mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="remove-block-pic">
+                                <i class="fas fa-trash me-1"></i>Eliminar imagen
+                            </button>
+                        </div>
+                    </div>
+                    {/if}
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="mt-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                    <a href="{:url('brand_index')}" class="btn btn-secondary btn-lg ms-2">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label for="txt_short" class="form-label">Texto corto</label>
-        <input type="text" class="form-control" name="txt_short" value="{$category.txt_short}" required>
-    </div>
 
-    <div class="mb-3">
-        <label for="txt_long" class="form-label">Texto largo</label>
-        <input type="text" class="form-control" name="txt_long" value="{$category.txt_long}" required>
-    </div>
 
-    <div class="mb-3">
-        <label for="slug" class="form-label">Slug</label>
-        <input type="text" class="form-control" name="slug" value="{$category.slug}" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="description" class="form-label">Descripción</label>
-        <textarea class="form-control" name="description" rows="3">{$category.description}</textarea>
-    </div>
-
-    <div class="mb-3">
-        <label for="pic" class="form-label">Imagen</label>
-        <input type="text" class="form-control" name="pic" value="{$category.pic}">
-    </div>
-
-    <div class="mb-3">
-        <label for="bg" class="form-label">Fondo</label>
-        <input type="text" class="form-control" name="bg" value="{$category.bg}">
-    </div>
-
-    <div class="mb-3">
-        <label for="visible" class="form-label">Visible</label>
-        <select class="form-select" name="visible">
-            <option value="1" {if $category.visible == 1}selected{/if}>Sí</option>
-            <option value="0" {if $category.visible == 0}selected{/if}>No</option>
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-    <a href="{:url('category_index')}" class="btn btn-secondary">Cancelar</a>
-</form>
-
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar label de inputs de archivo
+    document.querySelectorAll('.custom-file-input').forEach(function(input) {
+        input.addEventListener('change', function(e) {
+            var fileName = e.target.files[0] ? e.target.files[0].name : 'Seleccionar archivo';
+            var label = e.target.nextElementSibling;
+            label.textContent = fileName;
+        });
+    });
+    
+    // Generar slug automáticamente desde el nombre en inglés
+    const brandEnInput = document.getElementById('brand_en');
+    const slugInput = document.getElementById('slug');
+    
+    if (brandEnInput && slugInput) {
+        brandEnInput.addEventListener('blur', function() {
+            if (!slugInput.value || slugInput.value === brandEnInput.dataset.original) {
+                const slug = brandEnInput.value
+                    .toLowerCase()
+                    .trim()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+                    .replace(/[^a-z0-9 -]/g, '') // Eliminar caracteres no válidos
+                    .replace(/\s+/g, '-') // Reemplazar espacios con guiones
+                    .replace(/-+/g, '-'); // Eliminar guiones múltiples
+                
+                slugInput.value = slug;
+                brandEnInput.dataset.original = brandEnInput.value;
+            }
+        });
+    }
+    
+    // Funcionalidad para eliminar imágenes
+    document.getElementById('remove-pic')?.addEventListener('click', function() {
+        document.getElementById('delete_pic_input').value = '1';
+        document.querySelector('input[name="existing_pic"]').value = '';
+        document.querySelector('.custom-file-input[name="pic"]').value = '';
+        this.closest('.form-group').querySelector('.img-thumbnail').style.display = 'none';
+        this.style.display = 'none';
+    });
+    
+    document.getElementById('remove-block-pic')?.addEventListener('click', function() {
+        document.getElementById('delete_block_pic_input').value = '1';
+        document.querySelector('input[name="existing_block_pic"]').value = '';
+        document.querySelector('.custom-file-input[name="block_pic"]').value = '';
+        this.closest('.form-group').querySelector('.img-thumbnail').style.display = 'none';
+        this.style.display = 'none';
+    });
+});
+</script>
 {/block}
