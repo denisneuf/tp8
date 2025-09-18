@@ -11,6 +11,34 @@
         </div>
     {/if}
 
+    {if isset($success)}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Éxito:</strong> {$success}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+    <!-- DEBUG: Mostrar datos recuperados -->
+    <!--
+    {if isset($old_data) && $old_data}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>DEBUG Old Data:</strong>
+            <pre>{:print_r($old_data, true)}</pre>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+
+    {if isset($error_field)}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <strong>DEBUG Error Field:</strong> {$error_field}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+    -->
 
     <!-- Tarjeta principal del formulario -->
     <div class="card shadow mb-4">
@@ -23,28 +51,263 @@
             </a>
         </div>
         <div class="card-body">
-            <form action="{:url('brand_save')}" method="post" novalidate>
+            <form action="{:url('brand_save')}" method="post" novalidate enctype="multipart/form-data">
                 {:token_field()}
-                <div class="mb-3">
-                    <label for="brand_en" class="form-label">Nombre en inglés</label>
-                    <input type="text" class="form-control" name="brand_en" id="brand_en" required>
+                
+                <!-- Sección: Información Básica -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="brand_en" class="form-label">Nombre en inglés <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'brand_en'}is-invalid{/if}" 
+                                   name="brand_en" id="brand_en" required 
+                                   maxlength="100" value="{if isset($old_data.brand_en)}{$old_data.brand_en}{/if}">
+                            {if isset($error_field) && $error_field == 'brand_en'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Este campo es obligatorio y único.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="brand_cn" class="form-label">Nombre en chino</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'brand_cn'}is-invalid{/if}" 
+                                   name="brand_cn" id="brand_cn" 
+                                   maxlength="100" value="{if isset($old_data.brand_cn)}{$old_data.brand_cn}{/if}">
+                            {if isset($error_field) && $error_field == 'brand_cn'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'slug'}is-invalid{/if}" 
+                                   name="slug" id="slug" required 
+                                   maxlength="100" value="{if isset($old_data.slug)}{$old_data.slug}{/if}">
+                            {if isset($error_field) && $error_field == 'slug'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Usar solo letras, números y guiones.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-image me-2"></i>Imágenes</h5>
+                        
+                        <div class="mb-3">
+                            <label for="pic" class="form-label">Imagen principal</label>
+                            <input type="file" class="form-control {if isset($error_field) && $error_field == 'pic'}is-invalid{/if}" 
+                                   name="pic" id="pic" accept="image/*">
+                            {if isset($error_field) && $error_field == 'pic'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Imagen cuadrada recomendada (mínimo 800x800px).</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="block_pic" class="form-label">Imagen destacada</label>
+                            <input type="file" class="form-control {if isset($error_field) && $error_field == 'block_pic'}is-invalid{/if}" 
+                                   name="block_pic" id="block_pic" accept="image/*">
+                            {if isset($error_field) && $error_field == 'block_pic'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Imagen horizontal para bloques destacados.</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="slug" class="form-label">Slug</label>
-                    <input type="text" class="form-control" name="slug" id="slug" required>
+                
+                <!-- Sección: SEO -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-search me-2"></i>Optimización SEO</h5>
+                        
+                        <div class="mb-3">
+                            <label for="meta_title" class="form-label">Título SEO</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'meta_title'}is-invalid{/if}" 
+                                   name="meta_title" id="meta_title" 
+                                   maxlength="255" value="{if isset($old_data.meta_title)}{$old_data.meta_title}{/if}">
+                            {if isset($error_field) && $error_field == 'meta_title'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="meta_description" class="form-label">Descripción SEO</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'meta_description'}is-invalid{/if}" 
+                                      name="meta_description" id="meta_description" 
+                                      rows="3" maxlength="1000">{if isset($old_data.meta_description)}{$old_data.meta_description}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'meta_description'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 1000 caracteres.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="keywords" class="form-label">Palabras clave</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'keywords'}is-invalid{/if}" 
+                                      name="keywords" id="keywords" 
+                                      rows="2" maxlength="255">{if isset($old_data.keywords)}{$old_data.keywords}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'keywords'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Separar palabras clave con comas. Máximo 255 caracteres.</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email" id="email">
+                
+                <!-- Sección: Descripciones -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="txt_description" class="form-label">Descripción larga</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'txt_description'}is-invalid{/if}" 
+                                      name="txt_description" id="txt_description" 
+                                      rows="4" maxlength="2000">{if isset($old_data.txt_description)}{$old_data.txt_description}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'txt_description'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 2000 caracteres.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="block_description" class="form-label">Descripción destacada</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'block_description'}is-invalid{/if}" 
+                                      name="block_description" id="block_description" 
+                                      rows="4" maxlength="2000">{if isset($old_data.block_description)}{$old_data.block_description}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'block_description'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 2000 caracteres. Para bloques destacados.</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="telephone" class="form-label">Teléfono</label>
-                    <input type="text" class="form-control" name="telephone" id="telephone">
+                
+                <!-- Sección: Contacto -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-telephone me-2"></i>Información de Contacto</h5>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control {if isset($error_field) && $error_field == 'email'}is-invalid{/if}" 
+                                   name="email" id="email" 
+                                   maxlength="100" value="{if isset($old_data.email)}{$old_data.email}{/if}">
+                            {if isset($error_field) && $error_field == 'email'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Formato de email válido. Máximo 100 caracteres.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="telephone" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'telephone'}is-invalid{/if}" 
+                                   name="telephone" id="telephone" 
+                                   maxlength="50" value="{if isset($old_data.telephone)}{$old_data.telephone}{/if}">
+                            {if isset($error_field) && $error_field == 'telephone'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 50 caracteres.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'direccion'}is-invalid{/if}" 
+                                   name="direccion" id="direccion" 
+                                   maxlength="255" value="{if isset($old_data.direccion)}{$old_data.direccion}{/if}">
+                            {if isset($error_field) && $error_field == 'direccion'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fax" class="form-label">Fax</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'fax'}is-invalid{/if}" 
+                                   name="fax" id="fax" 
+                                   maxlength="50" value="{if isset($old_data.fax)}{$old_data.fax}{/if}">
+                            {if isset($error_field) && $error_field == 'fax'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 50 caracteres.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="web" class="form-label">Sitio web</label>
+                            <input type="url" class="form-control {if isset($error_field) && $error_field == 'web'}is-invalid{/if}" 
+                                   name="web" id="web" 
+                                   maxlength="255" value="{if isset($old_data.web)}{$old_data.web}{/if}" placeholder="https://">
+                            {if isset($error_field) && $error_field == 'web'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Formato de URL válido. Máximo 255 caracteres.</div>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Crear</button>
-                <a href="{:url('brand_index')}" class="btn btn-secondary">Cancelar</a>
+                
+                <!-- Botones de acción -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Crear Marca
+                    </button>
+                    <a href="{:url('brand_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
+                </div>
             </form>
         </div>
     </div>
 
+{/block}
+
+{block name="scripts"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación básica del formulario
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar campos requeridos
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor, complete los campos obligatorios marcados con *.');
+        }
+    });
+    
+    // Auto-generar slug desde brand_en
+    const brandEnInput = document.getElementById('brand_en');
+    const slugInput = document.getElementById('slug');
+    
+    if (brandEnInput && slugInput) {
+        brandEnInput.addEventListener('blur', function() {
+            if (!slugInput.value) {
+                const slug = this.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+                slugInput.value = slug;
+            }
+        });
+    }
+});
+</script>
 {/block}

@@ -59,6 +59,8 @@
                     <i class="fas fa-images me-2"></i>Imágenes de la Categoría
                 </h5>
                 
+
+                <!--
                 <div class="mb-3">
                     <label for="pic" class="form-label">Imagen Principal</label>
                     <input type="file" class="form-control" name="pic" id="pic" accept="image/*">
@@ -78,25 +80,64 @@
                     </div>
                     {/if}
                 </div>
+            -->
+
+
+                <div class="mb-3">
+                    <label for="pic" class="form-label">Imagen Principal</label>
+                    <input type="file" class="form-control" name="pic" id="pic" accept="image/*">
+                    <div class="form-text">Imagen cuadrada (mín. 800×800px)</div>
+                    
+                        {if $category.pic}
+                        <div class="mt-3" id="current-pic-container">
+                            <p class="mb-1">Imagen actual:</p>
+                            <img src="/static/img/category/{$category.pic}" alt="Imagen actual" class="img-thumbnail" style="max-height: 150px;">
+                            <input type="hidden" name="existing_pic" value="{$category.pic}">
+                            <input type="hidden" name="delete_pic" id="delete_pic_input" value="0">
+                            <div class="mt-1">
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="remove-pic">
+                                    <i class="fas fa-trash me-1"></i>Eliminar imagen
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success" id="restore-pic" style="display: none;">
+                                    <i class="fas fa-undo me-1"></i>Restaurar imagen
+                                </button>
+                            </div>
+                        </div>
+                        {/if}
+                </div>
+
                 
                 <div class="mb-3">
                     <label for="block_pic" class="form-label">Imagen de Bloque/Banner</label>
                     <input type="file" class="form-control" name="block_pic" id="block_pic" accept="image/*">
                     <div class="form-text">Relación 2:1 recomendada (ej. 1200×600px)</div>
                     
-                    {if $category.block_pic}
-                    <div class="mt-3">
-                        <p class="mb-1">Imagen actual:</p>
-                        <img src="/static/img/category/{$category.block_pic}" alt="Imagen de bloque actual" class="img-thumbnail" style="max-height: 150px;">
-                        <input type="hidden" name="existing_block_pic" value="{$category.block_pic}">
-                        <input type="hidden" name="delete_block_pic" id="delete_block_pic_input" value="0">
-                        <div class="mt-1">
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="remove-block-pic">
-                                <i class="fas fa-trash me-1"></i>Eliminar imagen
-                            </button>
-                        </div>
-                    </div>
-                    {/if}
+{if $category.bg}
+<div class="mt-3" id="current-block-pic-container">
+    <p class="mb-1">Imagen de bloque actual:</p>
+    <img src="/static/img/category/{$category.bg}" alt="Imagen de bloque" class="img-thumbnail" style="max-height: 150px;">
+    <input type="hidden" name="existing_block_pic" value="{$category.bg}">
+    <input type="hidden" name="delete_block_pic" id="delete_block_pic_input" value="0">
+    <div class="mt-1">
+        <button type="button" class="btn btn-sm btn-outline-danger" id="remove-block-pic">
+            <i class="fas fa-trash me-1"></i>Eliminar imagen
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success" id="restore-block-pic" style="display: none;">
+            <i class="fas fa-undo me-1"></i>Restaurar imagen
+        </button>
+    </div>
+</div>
+{/if}
+                </div>
+
+
+
+                <div class="mb-3">
+                    <label>Visible</label>
+                    <select name="visible" class="form-control">
+                        <option value="0" {eq name="$category.visible" value="0"}selected{/eq}>No</option>
+                        <option value="1" {eq name="$category.visible" value="1"}selected{/eq}>Sí</option>
+                    </select>
                 </div>
 
                 <!-- Botones de acción -->
@@ -114,14 +155,47 @@
 
 
 
+<!-- Modal de Confirmación para Eliminar Imágenes -->
+<div class="modal fade" id="deleteImagesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirmar eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar las imágenes seleccionadas?</p>
+                <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+                <div id="modalImagesList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Sí, eliminar imágenes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Actualizar label de inputs de archivo
-    document.querySelectorAll('.custom-file-input').forEach(function(input) {
+    document.querySelectorAll('input[type="file"]').forEach(function(input) {
         input.addEventListener('change', function(e) {
             var fileName = e.target.files[0] ? e.target.files[0].name : 'Seleccionar archivo';
-            var label = e.target.nextElementSibling;
-            label.textContent = fileName;
+            var label = this.nextElementSibling;
+            if (label && label.classList.contains('custom-file-label')) {
+                label.textContent = fileName;
+            }
         });
     });
     
@@ -130,8 +204,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const slugInput = document.getElementById('slug');
     
     if (brandEnInput && slugInput) {
+        // Guardar el valor original del slug
+        if (!slugInput.dataset.original) {
+            slugInput.dataset.original = slugInput.value;
+        }
+        
         brandEnInput.addEventListener('blur', function() {
-            if (!slugInput.value || slugInput.value === brandEnInput.dataset.original) {
+            if (!slugInput.value || slugInput.value === slugInput.dataset.original) {
                 const slug = brandEnInput.value
                     .toLowerCase()
                     .trim()
@@ -141,26 +220,231 @@ document.addEventListener('DOMContentLoaded', function() {
                     .replace(/-+/g, '-'); // Eliminar guiones múltiples
                 
                 slugInput.value = slug;
-                brandEnInput.dataset.original = brandEnInput.value;
             }
         });
     }
     
-    // Funcionalidad para eliminar imágenes
-    document.getElementById('remove-pic')?.addEventListener('click', function() {
-        document.getElementById('delete_pic_input').value = '1';
-        document.querySelector('input[name="existing_pic"]').value = '';
-        document.querySelector('.custom-file-input[name="pic"]').value = '';
-        this.closest('.form-group').querySelector('.img-thumbnail').style.display = 'none';
-        this.style.display = 'none';
+    // Función para configurar botones de eliminar/restaurar
+    function setupImageButtons(removeBtnId, restoreBtnId, deleteInputId, containerId, fileInputName) {
+        const removeBtn = document.getElementById(removeBtnId);
+        const restoreBtn = document.getElementById(restoreBtnId);
+        const deleteInput = document.getElementById(deleteInputId);
+        const container = document.getElementById(containerId);
+        
+        if (!removeBtn || !deleteInput || !container) return;
+        
+        // Evento para eliminar imagen
+        removeBtn.addEventListener('click', function() {
+            deleteInput.value = '1';
+            
+            // Ocultar imagen y botón de eliminar
+            const img = container.querySelector('img');
+            if (img) img.style.display = 'none';
+            removeBtn.style.display = 'none';
+            
+            // Mostrar botón de restaurar
+            if (restoreBtn) restoreBtn.style.display = 'block';
+            
+            // Mostrar mensaje de eliminación
+            const existingMessage = container.querySelector('.delete-message');
+            if (!existingMessage) {
+                const message = document.createElement('div');
+                message.className = 'alert alert-warning mt-2 delete-message';
+                message.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>La imagen se eliminará al guardar';
+                container.appendChild(message);
+            }
+            
+            // Deshabilitar input de archivo
+            const fileInput = document.querySelector(`input[name="${fileInputName}"]`);
+            if (fileInput) fileInput.disabled = true;
+        });
+        
+        // Evento para restaurar imagen (si el botón existe)
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', function() {
+                deleteInput.value = '0';
+                
+                // Mostrar imagen y botón de eliminar
+                const img = container.querySelector('img');
+                if (img) img.style.display = 'block';
+                removeBtn.style.display = 'block';
+                
+                // Ocultar botón de restaurar
+                restoreBtn.style.display = 'none';
+                
+                // Eliminar mensaje de eliminación
+                const message = container.querySelector('.delete-message');
+                if (message) message.remove();
+                
+                // Habilitar input de archivo
+                const fileInput = document.querySelector(`input[name="${fileInputName}"]`);
+                if (fileInput) fileInput.disabled = false;
+            });
+        }
+    }
+    
+    // Configurar botones para imagen principal
+    setupImageButtons(
+        'remove-pic', 
+        'restore-pic', 
+        'delete_pic_input', 
+        'current-pic-container',
+        'pic'
+    );
+    
+    // Configurar botones para imagen de bloque
+    setupImageButtons(
+        'remove-block-pic', 
+        'restore-block-pic', 
+        'delete_block_pic_input', 
+        'current-block-pic-container',
+        'block_pic'
+    );
+    
+    // Crear modal de confirmación para eliminación de imágenes
+    const confirmationModal = document.createElement('div');
+    confirmationModal.className = 'modal fade';
+    confirmationModal.id = 'deleteImagesModal';
+    confirmationModal.tabIndex = '-1';
+    confirmationModal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        Confirmar eliminación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres eliminar las imágenes seleccionadas?</p>
+                    <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+                    <div id="modalImagesList"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">
+                        <i class="fas fa-trash me-1"></i>Sí, eliminar imágenes
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(confirmationModal);
+    
+    // Variable para guardar el evento de submit
+    let formSubmitEvent = null;
+    
+    // Validación del formulario con modal de confirmación
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Validar campos obligatorios primero
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(function(field) {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                // Mostrar alerta general
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Error:</strong> Por favor, complete todos los campos obligatorios.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                form.prepend(alertDiv);
+                
+                // Scroll al primer error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+                return;
+            }
+            
+            // Verificar si hay imágenes marcadas para eliminar
+            const deletePicInput = document.getElementById('delete_pic_input');
+            const deleteBlockPicInput = document.getElementById('delete_block_pic_input');
+            
+            const hasImagesToDelete = (deletePicInput && deletePicInput.value === '1') || 
+                                     (deleteBlockPicInput && deleteBlockPicInput.value === '1');
+            
+            if (hasImagesToDelete) {
+                e.preventDefault();
+                formSubmitEvent = e;
+                
+                // Preparar contenido del modal
+                const modalImagesList = document.getElementById('modalImagesList');
+                modalImagesList.innerHTML = '';
+                
+                if (deletePicInput && deletePicInput.value === '1') {
+                    const existingPic = document.querySelector('input[name="existing_pic"]');
+                    if (existingPic) {
+                        modalImagesList.innerHTML += `
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-image text-primary me-2"></i>
+                                <span>Imagen principal: ${existingPic.value}</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                if (deleteBlockPicInput && deleteBlockPicInput.value === '1') {
+                    const existingBlockPic = document.querySelector('input[name="existing_block_pic"]');
+                    if (existingBlockPic) {
+                        modalImagesList.innerHTML += `
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-images text-info me-2"></i>
+                                <span>Imagen de bloque: ${existingBlockPic.value}</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Mostrar modal
+                const modal = new bootstrap.Modal(document.getElementById('deleteImagesModal'));
+                modal.show();
+            }
+        });
+    }
+    
+    // Configurar botón de confirmación del modal
+    document.getElementById('confirmDelete')?.addEventListener('click', function() {
+        if (formSubmitEvent) {
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteImagesModal'));
+            modal.hide();
+            
+            // Re-enviar el formulario
+            form.submit();
+        }
     });
     
-    document.getElementById('remove-block-pic')?.addEventListener('click', function() {
-        document.getElementById('delete_block_pic_input').value = '1';
-        document.querySelector('input[name="existing_block_pic"]').value = '';
-        document.querySelector('.custom-file-input[name="block_pic"]').value = '';
-        this.closest('.form-group').querySelector('.img-thumbnail').style.display = 'none';
-        this.style.display = 'none';
+    // Funcionalidad adicional: Permitir restaurar con la tecla ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const restorePicBtn = document.getElementById('restore-pic');
+            const restoreBlockPicBtn = document.getElementById('restore-block-pic');
+            
+            if (restorePicBtn && restorePicBtn.style.display === 'block') {
+                restorePicBtn.click();
+            } else if (restoreBlockPicBtn && restoreBlockPicBtn.style.display === 'block') {
+                restoreBlockPicBtn.click();
+            }
+        }
     });
 });
 </script>

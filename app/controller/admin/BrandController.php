@@ -79,6 +79,18 @@ class BrandController extends BaseController
      */
     public function create(): string
     {
+
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
+        View::assign([
+            'old_data' => $oldData,
+            'error_field' => $errorField,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
         return View::fetch('/admin/brand/create');
     }
 
@@ -91,19 +103,96 @@ class BrandController extends BaseController
     public function save(Request $request): Redirect
     {
         $data = $request->post();
-
-        // Usar el validador inyectado en lugar de crear una nueva instancia
+        // 1. PRIMERO validar (FUERA del try-catch)
         if (!$this->brandValidator->check($data)) {
-            return redirect((string) url('brand_create'))->with('error', $this->brandValidator->getError());
+
+            $error = $this->brandValidator->getError(); // Esto devuelve un array en ThinkPHP 8
+            // Devuelve ['code' => campo, 'msg' => mensaje]
+
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
+
+            
+            // Limpiar solo el campo con error
+            $cleanData = $data;
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
+            }
+
+
+            return redirect((string) url('brand_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
         }
 
+        // 2. LUEGO procesar archivos (DENTRO del try-catch)
         try {
+            // OBTENER ARCHIVOS
+            $file = null;
+            if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
+                $file = $request->file('pic');
+            }
+
+            $bg = null;
+            if (isset($_FILES['block_pic']) && $_FILES['block_pic']['error'] === UPLOAD_ERR_OK) {
+                $bg = $request->file('block_pic');
+            }
+
+            // Definir paths
+            $basePath = app()->getRootPath() . 'public/static/img/';
+            $topicPath = $basePath . 'brand/';
+
+            // LÓGICA PARA LA IMAGEN PRINCIPAL (pic)
+            if ($file) {
+                $this->imageService->setImageMinDimension(800);
+                try {
+                    $data['pic'] = $this->imageService->processSquareImage(
+                        $file, 
+                        $topicPath, 
+                        $data['brand_en'], 
+                        null
+                    );
+                } catch (\RuntimeException $e) {
+                    return redirect((string) url('brand_create'))
+                        ->with('old_data', $data)
+                        ->with('error', $e->getMessage());
+                }
+            } else {
+                $data['pic'] = null;
+            }
+
+            // LÓGICA PARA LA IMAGEN DE BLOQUE (block_pic)
+            if ($bg) {
+                try {
+                    $data['block_pic'] = $this->imageService->processLandscapeImage(
+                        $bg, 
+                        $topicPath, 
+                        $data['brand_en'], 
+                        null
+                    );
+                } catch (\RuntimeException $e) {
+                    return redirect((string) url('brand_create'))
+                        ->with('old_data', $data)
+                        ->with('error', $e->getMessage());
+                }
+            } else {
+                $data['block_pic'] = null;
+            }
+
+            // Crear la marca en la base de datos
             Brand::create($data);
             return redirect((string) url('brand_index'))->with('success', 'Marca creada correctamente.');
+
         } catch (\Exception $e) {
-            return redirect((string) url('brand_create'))->with('error', $e->getMessage());
+            // Esto solo captura errores inesperados
+            return redirect((string) url('brand_create'))
+                ->with('old_data', $data)
+                ->with('error', 'Error inesperado: ' . $e->getMessage());
         }
     }
+
+
 
     /**
      * Muestra el formulario para editar una marca existente
@@ -116,11 +205,17 @@ class BrandController extends BaseController
         $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
 
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
         try {
             $brand = Brand::findOrFail($id);
-            View::assign('success', $successMessage);
+
+            //View::assign('success', $successMessage);
             View::assign('error', $errorMessage);
             View::assign('brand', $brand);
+            View::assign('old_data', $oldData);
+            View::assign('error_field', $errorField);
             return View::fetch('admin/brand/edit');
             
         } catch (ModelNotFoundException $e) {
@@ -191,7 +286,7 @@ class BrandController extends BaseController
      */
 
 
-    public function update(Request $request, int $id): Redirect
+    public function update(Request $request, int $id)
     {
         /** @var Brand $brand Instancia de la marca a actualizar */
         $brand = Brand::findOrFail($id);
@@ -212,18 +307,121 @@ class BrandController extends BaseController
         $basePath = app()->getRootPath() . 'public/static/img/';
         $topicPath = $basePath . 'brand/';
 
+
+
+        // Establecer el escenario base
+        $this->brandValidator->scene('update');
+
+        // Obtener las reglas actuales y modificar condicionalmente
+        $rules = $this->brandValidator->getRule();
+
+        if ($data['brand_en'] !== $brand->brand_en) {
+            $rules['brand_en'] = 'require|max:100|unique:brands,brand_en,' . $id;
+        } else {
+            $rules['brand_en'] = 'require|max:100';
+        }
+
+        if ($data['slug'] !== $brand->slug) {
+            $rules['slug'] = 'require|max:100|unique:brands,slug,' . $id;
+        } else {
+            $rules['slug'] = 'require|max:100';
+        }
+
+        // Aplicar las reglas modificadas
+        $this->brandValidator->rule($rules);
+
+        if (!$this->brandValidator->check($data)) {
+        //if (!$this->brandValidator->scene('update')->check($data)) {
+
+            $error = $this->brandValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
+
+
+            // Limpiar solo el campo con error
+            $cleanData = $data;
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
+            }
+
+            return redirect((string) url('brand_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
+
+
+            //return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $errorMessage);
+        }
+
+
+        // Luego validar manualmente la unicidad solo si cambió
+        
+        if ($data['brand_en'] !== $brand->brand_en) {
+            $exists = \app\model\Brand::where('brand_en', $data['brand_en'])
+                ->where('id', '<>', $id)
+                ->find();
+            
+            if ($exists) {
+
+
+
+                // Limpiar solo el campo con error
+                $cleanData = $data;
+                $error_content = $cleanData['brand_en'];
+                if (isset($cleanData['brand_en'])) {
+                    $cleanData['brand_en'] = '';
+                }
+
+
+                return redirect((string) url('brand_edit', ['id' => $id]))
+                    ->with('old_data', $cleanData)
+                    ->with('error', 'Manual Ya existe una marca con ese nombre en inglés: ' . $error_content)
+                    ->with('error_field', 'brand_en');
+            }
+        }
+
+        if ($data['slug'] !== $brand->slug) {
+            $exists = \app\model\Brand::where('slug', $data['slug'])
+                ->where('id', '<>', $id)
+                ->find();
+            
+            if ($exists) {
+
+
+                // Limpiar solo el campo con error
+                $cleanData = $data;
+
+                $error_content = $cleanData['slug'];
+
+                if (isset($cleanData['slug'])) {
+                    $cleanData['slug'] = '';
+                }
+
+                return redirect((string) url('brand_edit', ['id' => $id]))
+                    ->with('old_data', $cleanData)
+                    ->with('error', 'Manual El slug ya existe: '. $error_content)
+                    ->with('error_field', 'slug');
+            }
+        }
+
+
+
+
+
+
         try {
             // Inicializar campos de eliminación si no existen
             $data['delete_pic'] = $data['delete_pic'] ?? '0';
             $data['delete_block_pic'] = $data['delete_block_pic'] ?? '0';
 
             // Obtener reglas de validación específicas para actualización
-            $rules = $this->getUpdateValidationRules($data, $brand, $id);
-            $this->brandValidator->rule($rules);
+            // $rules = $this->getUpdateValidationRules($data, $brand, $id);
+            // $this->brandValidator->rule($rules);
+
+
             
-            if (!$this->brandValidator->check($data)) {
-                return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $this->brandValidator->getError());
-            }
+
+
 
             // LÓGICA PARA LA IMAGEN PRINCIPAL (pic)
             if ($data['delete_pic'] == '1') {
@@ -236,9 +434,15 @@ class BrandController extends BaseController
             } else {
                 // Verificar si hay nuevo archivo (ya obtenido al inicio)
                 if ($file) {
+
+                    // CONFIGURAR el tamaño mínimo
+                    $this->imageService->setImageMinDimension(800);
+
+
                     try {
-                        $data['pic'] = $this->imageService->processBrandLogo(
-                            $file, 
+                        $data['pic'] = $this->imageService->processSquareImage(
+                            $file,
+                            $topicPath, 
                             $data['brand_en'], 
                             $brand->pic
                         );
@@ -260,8 +464,9 @@ class BrandController extends BaseController
                 // Verificar si hay nuevo archivo (ya obtenido al inicio)
                 if ($bg) {
                     try {
-                        $data['block_pic'] = $this->imageService->processBrandBlockImage(
-                            $bg, 
+                        $data['block_pic'] = $this->imageService->processLandscapeImage(
+                            $bg,
+                            $topicPath, 
                             $data['brand_en'], 
                             $brand->block_pic
                         );
@@ -272,7 +477,8 @@ class BrandController extends BaseController
             }
 
             // Actualizar marca en la base de datos
-            Brand::update($data, ['id' => $id]);
+            //Brand::update($data, ['id' => $id]);
+            $brand->save($data);
             return redirect((string) url('brand_index'))->with('success', 'Marca actualizada correctamente.');
 
         } catch (\InvalidArgumentException $e) {
