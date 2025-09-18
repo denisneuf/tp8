@@ -223,54 +223,6 @@ class BrandController extends BaseController
         }
     }
 
-    /**
-     * Obtiene las reglas de validación para actualizar una marca
-     * 
-     * Las reglas incluyen validación condicional para unicidad del nombre en inglés
-     * solo cuando el campo ha cambiado respecto al valor original.
-     * 
-     * @param array $data Datos del formulario a validar
-     * @param Brand $brand Instancia de la marca existente
-     * @param int $id ID de la marca que se está actualizando
-     * @return array<string, array<string>> Array de reglas de validación
-     * @throws \InvalidArgumentException Si los datos no contienen los campos necesarios
-     */
-    private function getUpdateValidationRules(array $data, Brand $brand, int $id): array
-    {
-        // Validar que los datos necesarios estén presentes
-        if (!isset($data['brand_en'])) {
-            throw new \InvalidArgumentException('El campo brand_en es requerido para la validación');
-        }
-
-        $rules = [
-            'brand_en' => ['require', 'max:100'],
-            'slug'     => ['require', 'max:100', 'unique:brands,slug,' . $id],
-            'email'    => ['email'],
-            'web'      => ['url'],
-            'brand_cn' => ['max:100'],
-            'meta_title' => ['max:255'],
-            'meta_description' => ['max:1000'],
-            'keywords' => ['max:255'],
-            'txt_description' => ['max:2000'],
-            'block_description' => ['max:2000'],
-            'pic' => ['max:255'],
-            'block_pic' => ['max:255'],
-            'telephone' => ['max:50'],
-            'direccion' => ['max:255'],
-            'fax' => ['max:50'],
-        ];
-        
-        /**
-         * Añadir regla de unicidad condicional para brand_en
-         * Solo se valida la unicidad si el valor ha cambiado respecto al original
-         * Esto evita errores de validación cuando el usuario no modifica el nombre
-         */
-        if ($data['brand_en'] !== $brand->brand_en) {
-            $rules['brand_en'][] = 'unique:brands,brand_en';
-        }
-        
-        return $rules;
-    }
 
     /**
      * Actualiza una marca existente en la base de datos
@@ -414,15 +366,6 @@ class BrandController extends BaseController
             $data['delete_pic'] = $data['delete_pic'] ?? '0';
             $data['delete_block_pic'] = $data['delete_block_pic'] ?? '0';
 
-            // Obtener reglas de validación específicas para actualización
-            // $rules = $this->getUpdateValidationRules($data, $brand, $id);
-            // $this->brandValidator->rule($rules);
-
-
-            
-
-
-
             // LÓGICA PARA LA IMAGEN PRINCIPAL (pic)
             if ($data['delete_pic'] == '1') {
                 // ELIMINAR imagen existente
@@ -487,6 +430,20 @@ class BrandController extends BaseController
             return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
         }
     }
+
+    /**
+     * 
+     * @param Request $request Solicitud HTTP
+     * @param int $id ID de la marca a eliminar permanentemente
+     * @return \think\response\Redirect
+     */
+    public function forceDelete(Request $request, int $id): Redirect
+    {
+        $brand = Brand::onlyTrashed()->findOrFail($id);
+        $brand->force()->delete();
+        return redirect((string) url('brand_index'))->with('success', 'Marca eliminada permanentemente.');
+    }
+
 
     /**
      * Elimina una marca (soft delete)

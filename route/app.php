@@ -83,6 +83,7 @@ Route::group('admin/brand', function () {
     Route::post('update', 'app\controller\admin\BrandController@update')->pattern(['id' => '\d+'])->name('brand_update');
     Route::post('delete', 'app\controller\admin\BrandController@delete')->pattern(['id' => '\d+'])->name('brand_delete');
     Route::post('restore', 'app\controller\admin\BrandController@restore')->pattern(['id' => '\d+'])->name('brand_restore');
+    Route::post('force-delete', 'app\controller\admin\BrandController@forceDelete')->name('brand_force_delete');
 })->middleware('admin')->middleware('adminmenu');
 
 
