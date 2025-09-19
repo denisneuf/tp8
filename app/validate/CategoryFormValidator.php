@@ -17,7 +17,7 @@ class CategoryFormValidator extends Validate
         'bg'          => 'max:255',
         'visible'     => 'require|in:0,1',
     ];
-
+    
     protected $message = [
         'txt_short.require'   => ['code' => 'txt_short', 'msg' => 'El texto corto es obligatorio'],
         'txt_short.max'       => ['code' => 'txt_short', 'msg' => 'Máximo 100 caracteres para el texto corto'],
@@ -35,20 +35,31 @@ class CategoryFormValidator extends Validate
         'visible.in'          => ['code' => 'visible', 'msg' => 'El campo de visibilidad debe ser 0 o 1'],
         'bs_icon.max'         => ['code' => 'bs_icon', 'msg' => 'Máximo 50 caracteres para el icono Bootstrap'],
     ];
+    
+    public function sceneUpdate(int $id)
+    {
+        // Filtramos los campos que queremos validar
+        $this->only([
+            'txt_short',
+            'slug',
+            'txt_long',
+            'bs_icon',
+            'description',
+            'pic',
+            'bg',
+            'visible'
+        ]);
 
-    protected $scene = [
-        'save' => [
-            'txt_short', 'slug', 'txt_long', 'description', 'pic', 'bg', 'visible', 'bs_icon'
-        ],
-        'update' => [
-            'txt_short' => 'require|max:100|unique:categories,txt_short,{id}',
-            'slug' => 'require|max:100|alphaDash|unique:categories,slug,{id}',
-            'txt_long' => 'require|max:255',
-            'description' => 'max:2000',
-            'pic' => 'max:255',
-            'bg' => 'max:255',
-            'visible' => 'require|in:0,1',
-            'bs_icon' => 'max:50'
-        ]
-    ];
+        // Quitamos las reglas base de txt_short y slug (que tenían unique sin id)
+        $this->removeRule(['txt_short', 'slug']);
+
+        // Añadimos las reglas correctas para update
+        $this->rule([
+            'txt_short' => "require|max:100|unique:categories,txt_short,{$id},id",
+            'slug'      => "require|max:100|alphaDash|unique:categories,slug,{$id},id",
+        ]);
+
+        return $this; // 👈 esto es clave
+    }
+
 }

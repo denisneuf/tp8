@@ -97,7 +97,7 @@ class CategoryController extends BaseController
         $data = $request->post();
 
         // 1. PRIMERO validar (FUERA del try-catch)
-        if (!$this->categoryValidator->scene('save')->check($data)) {
+        if (!$this->categoryValidator->check($data)) {
             $error = $this->categoryValidator->getError(); // Esto devuelve un array en ThinkPHP 8
             // Devuelve ['code' => campo, 'msg' => mensaje]
 
@@ -228,7 +228,7 @@ class CategoryController extends BaseController
      * @param int $id ID de la categoría
      * @return Redirect Redirección con mensaje de éxito/error
      */
-    public function update(Request $request, int $id): Redirect
+    public function update(Request $request, int $id)
     {
         /** @var Category $category Instancia de la categoría a actualizar */
         $category = Category::findOrFail($id);
@@ -249,63 +249,43 @@ class CategoryController extends BaseController
         $basePath = app()->getRootPath() . 'public/static/img/';
         $categoryPath = $basePath . 'category/';
 
-        if (!$this->categoryValidator->scene('update')->check($data)) {
-            $error = $this->categoryValidator->getError();
-            $errorField = $error['code'];
-            $errorMessage = $error['msg'];
 
-            // Limpiar solo el campo con error
-            $cleanData = $data;
-            if (isset($cleanData[$errorField])) {
-                $cleanData[$errorField] = '';
-            }
 
-            return redirect((string) url('category_edit', ['id' => $id]))
-                ->with('old_data', $cleanData)
-                ->with('error', $errorMessage)
-                ->with('error_field', $errorField);
-        }
+        /*
+        $data = [
+            'name'  => 'thinkphp',
+            'age'   => 10,
+            'email' => 'thinkphp@qq.com',
+        ];
+        */
 
-        // Validar manualmente la unicidad solo si cambió
-        if ($data['txt_short'] !== $category->txt_short) {
-            $exists = \app\model\Category::where('txt_short', $data['txt_short'])
-                ->where('id', '<>', $id)
-                ->find();
-            
-            if ($exists) {
+        dump($id); // el id que llega
+        dump($data); // datos enviados
+
+
+        try {
+            if (!$this->categoryValidator->sceneUpdate($id)->check($data)) {
+                $error = $this->categoryValidator->getError();
+                $errorField = $error['code'];
+                $errorMessage = $error['msg'];
+
                 // Limpiar solo el campo con error
                 $cleanData = $data;
-                $error_content = $cleanData['txt_short'];
-                if (isset($cleanData['txt_short'])) {
-                    $cleanData['txt_short'] = '';
+                if (isset($cleanData[$errorField])) {
+                    $cleanData[$errorField] = '';
                 }
 
                 return redirect((string) url('category_edit', ['id' => $id]))
                     ->with('old_data', $cleanData)
-                    ->with('error', 'Ya existe una categoría con ese texto corto: ' . $error_content)
-                    ->with('error_field', 'txt_short');
-            }
-        }
-
-        if ($data['slug'] !== $category->slug) {
-            $exists = \app\model\Category::where('slug', $data['slug'])
-                ->where('id', '<>', $id)
-                ->find();
-            
-            if ($exists) {
-                // Limpiar solo el campo con error
-                $cleanData = $data;
-                $error_content = $cleanData['slug'];
-                if (isset($cleanData['slug'])) {
-                    $cleanData['slug'] = '';
+                    ->with('error', $errorMessage)
+                    ->with('error_field', $errorField);
                 }
 
-                return redirect((string) url('category_edit', ['id' => $id]))
-                    ->with('old_data', $cleanData)
-                    ->with('error', 'El slug ya existe: ' . $error_content)
-                    ->with('error_field', 'slug');
-            }
+        } catch (ValidateException $e) {
+            dump($e->getError());
         }
+
+
 
         try {
             // Inicializar campos de eliminación si no existen
