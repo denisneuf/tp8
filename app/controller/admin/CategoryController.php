@@ -72,31 +72,115 @@ class CategoryController extends BaseController
      */
     public function create(): string
     {
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
+        View::assign([
+            'old_data' => $oldData,
+            'error_field' => $errorField,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
         return View::fetch('/admin/category/create');
     }
 
     /**
      * Guarda una nueva categoría en la base de datos
      * 
-     * @param Request $request Solicitud HTTP
-     * @return Redirect Redirección con mensaje de éxito/error
+     * @param Request $request Solicitud HTTP con los datos del formulario
+     * @return \think\response\Redirect
      */
     public function save(Request $request): Redirect
     {
         $data = $request->post();
 
-        if (!$this->categoryValidator->check($data)) {
-            return redirect((string) url('category_create'))->with('error', $this->categoryValidator->getError());
+        // 1. PRIMERO validar (FUERA del try-catch)
+        if (!$this->categoryValidator->scene('save')->check($data)) {
+            $error = $this->categoryValidator->getError(); // Esto devuelve un array en ThinkPHP 8
+            // Devuelve ['code' => campo, 'msg' => mensaje]
+
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
+
+            // Limpiar solo el campo con error
+            $cleanData = $data;
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
+            }
+
+            return redirect((string) url('category_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
         }
 
+        // 2. LUEGO procesar archivos (DENTRO del try-catch)
         try {
+            // OBTENER ARCHIVOS
+            $picFile = null;
+            if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
+                $picFile = $request->file('pic');
+            }
+
+            $bgFile = null;
+            if (isset($_FILES['bg']) && $_FILES['bg']['error'] === UPLOAD_ERR_OK) {
+                $bgFile = $request->file('bg');
+            }
+
+            // Definir paths
+            $basePath = app()->getRootPath() . 'public/static/img/';
+            $categoryPath = $basePath . 'category/';
+
+            // LÓGICA PARA LA IMAGEN PRINCIPAL (pic)
+            if ($picFile) {
+                $this->imageService->setImageMinDimension(800);
+                $this->imageService->setGenerateThumbnails(false);
+                try {
+                    $data['pic'] = $this->imageService->processSquareImage(
+                        $picFile, 
+                        $categoryPath, 
+                        $data['txt_short'], 
+                        null
+                    );
+                } catch (\RuntimeException $e) {
+                    return redirect((string) url('category_create'))
+                        ->with('old_data', $data)
+                        ->with('error', $e->getMessage());
+                }
+            } else {
+                $data['pic'] = null;
+            }
+
+            // LÓGICA PARA LA IMAGEN DE FONDO (bg)
+            if ($bgFile) {
+                try {
+                    $data['bg'] = $this->imageService->processLandscapeImage(
+                        $bgFile, 
+                        $categoryPath, 
+                        $data['txt_short'], 
+                        null
+                    );
+                } catch (\RuntimeException $e) {
+                    return redirect((string) url('category_create'))
+                        ->with('old_data', $data)
+                        ->with('error', $e->getMessage());
+                }
+            } else {
+                $data['bg'] = null;
+            }
+
+            // Crear la categoría en la base de datos
             Category::create($data);
             return redirect((string) url('category_index'))->with('success', 'Categoría creada correctamente.');
-        } catch (\Exception $e) {
-            return redirect((string) url('category_create'))->with('error', $e->getMessage());
-        }
 
-        return redirect('/admin/category/index');
+        } catch (\Exception $e) {
+            // Esto solo captura errores inesperados
+            return redirect((string) url('category_create'))
+                ->with('old_data', $data)
+                ->with('error', 'Error inesperado: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -108,13 +192,16 @@ class CategoryController extends BaseController
     public function edit(int $id): string|Redirect
     {
 
-        $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
+
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
 
 
         try {
             $category = Category::findOrFail($id);
-            View::assign('success', $successMessage);
+            View::assign('old_data', $oldData);
+            View::assign('error_field', $errorField);
             View::assign('error', $errorMessage);
             View::assign('category', $category);
             return View::fetch('admin/category/edit');
@@ -123,46 +210,17 @@ class CategoryController extends BaseController
             return redirect((string) url('category_index'))->with('error', $e->getMessage());
         }
 
+
     }
+
 
     /**
-     * Obtiene las reglas de validación para la actualización de categorías
+     * Actualiza una categoría existente en la base de datos
      * 
-     * @param array $data Datos del formulario
-     * @param Category $category Instancia de la categoría
+     * @param Request $request Solicitud HTTP
      * @param int $id ID de la categoría
-     * @return array Reglas de validación
-     * @throws \InvalidArgumentException Si falta el campo requerido
+     * @return Redirect Redirección con mensaje de éxito/error
      */
-    private function getUpdateValidationRules(array $data, Category $category, int $id): array
-    {
-        // Validar que los datos necesarios estén presentes
-        if (!isset($data['txt_short'])) {
-            throw new \InvalidArgumentException('El campo txt_short es requerido para la validación');
-        }
-
-        $rules = [
-            'bs_icon'     => ['max:55'],
-            'txt_long'    => ['require', 'max:35'],
-            'slug'        => ['require', 'max:55', 'alphaDash', 'unique:categories,slug,' . $id],
-            'description' => ['max:500'],
-            'pic'         => ['max:35'],
-            'bg'          => ['max:35'],
-            'visible'     => ['require', 'in:0,1'],
-        ];
-        
-        /**
-         * Añadir regla de unicidad condicional para brand_en
-         * Solo se valida la unicidad si el valor ha cambiado respecto al original
-         * Esto evita errores de validación cuando el usuario no modifica el nombre
-         */
-        if ($data['txt_short'] !== $category->txt_short) {
-            $rules['txt_short'][] = 'unique:categories,txt_short';
-        }
-        
-        return $rules;
-    }
-
     /**
      * Actualiza una categoría existente en la base de datos
      * 
@@ -172,55 +230,106 @@ class CategoryController extends BaseController
      */
     public function update(Request $request, int $id): Redirect
     {
+        /** @var Category $category Instancia de la categoría a actualizar */
+        $category = Category::findOrFail($id);
         $data = $request->post();
-        
+
+        // OBTENER ARCHIVOS AL INICIO (antes de cualquier procesamiento)
+        $picFile = null;
+        if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
+            $picFile = $request->file('pic');
+        }
+
+        $bgFile = null;
+        if (isset($_FILES['bg']) && $_FILES['bg']['error'] === UPLOAD_ERR_OK) {
+            $bgFile = $request->file('bg');
+        }
+
+        // Definir paths una sola vez
+        $basePath = app()->getRootPath() . 'public/static/img/';
+        $categoryPath = $basePath . 'category/';
+
+        if (!$this->categoryValidator->scene('update')->check($data)) {
+            $error = $this->categoryValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
+
+            // Limpiar solo el campo con error
+            $cleanData = $data;
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
+            }
+
+            return redirect((string) url('category_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
+        }
+
+        // Validar manualmente la unicidad solo si cambió
+        if ($data['txt_short'] !== $category->txt_short) {
+            $exists = \app\model\Category::where('txt_short', $data['txt_short'])
+                ->where('id', '<>', $id)
+                ->find();
+            
+            if ($exists) {
+                // Limpiar solo el campo con error
+                $cleanData = $data;
+                $error_content = $cleanData['txt_short'];
+                if (isset($cleanData['txt_short'])) {
+                    $cleanData['txt_short'] = '';
+                }
+
+                return redirect((string) url('category_edit', ['id' => $id]))
+                    ->with('old_data', $cleanData)
+                    ->with('error', 'Ya existe una categoría con ese texto corto: ' . $error_content)
+                    ->with('error_field', 'txt_short');
+            }
+        }
+
+        if ($data['slug'] !== $category->slug) {
+            $exists = \app\model\Category::where('slug', $data['slug'])
+                ->where('id', '<>', $id)
+                ->find();
+            
+            if ($exists) {
+                // Limpiar solo el campo con error
+                $cleanData = $data;
+                $error_content = $cleanData['slug'];
+                if (isset($cleanData['slug'])) {
+                    $cleanData['slug'] = '';
+                }
+
+                return redirect((string) url('category_edit', ['id' => $id]))
+                    ->with('old_data', $cleanData)
+                    ->with('error', 'El slug ya existe: ' . $error_content)
+                    ->with('error_field', 'slug');
+            }
+        }
+
         try {
-            $category = Category::findOrFail($id);
-
-            // OBTENER ARCHIVOS AL INICIO (antes de cualquier procesamiento)
-            $file = null;
-            if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
-                $file = $request->file('pic');
-            }
-
-            $bg = null;
-            if (isset($_FILES['block_pic']) && $_FILES['block_pic']['error'] === UPLOAD_ERR_OK) {
-                $bg = $request->file('block_pic');
-            }
-
-            // Definir paths una sola vez
-            $basePath = app()->getRootPath() . 'public/static/img/';
-            $topicPath = $basePath . 'category/';
-
             // Inicializar campos de eliminación si no existen
             $data['delete_pic'] = $data['delete_pic'] ?? '0';
-            $data['delete_block_pic'] = $data['delete_block_pic'] ?? '0';
-
-            // Obtener reglas de validación específicas para actualización
-            $rules = $this->getUpdateValidationRules($data, $category, $id);
-            $this->categoryValidator->rule($rules);
-            
-            if (!$this->categoryValidator->check($data)) {
-                return redirect((string) url('category_edit', ['id' => $id]))->with('error', $this->categoryValidator->getError());
-            }
+            $data['delete_bg'] = $data['delete_bg'] ?? '0';
 
             // LÓGICA PARA LA IMAGEN PRINCIPAL (pic)
             if ($data['delete_pic'] == '1') {
                 // ELIMINAR imagen existente
-                if ($category->pic && file_exists($topicPath . $category->pic)) {
-                    $this->imageService->deleteBrandImage($category->pic, $topicPath);
+                if ($category->pic && file_exists($categoryPath . $category->pic)) {
+                    $this->imageService->deleteBrandImage($category->pic, $categoryPath);
                 }
                 $data['pic'] = null;
             } else {
                 // Verificar si hay nuevo archivo (ya obtenido al inicio)
-                if ($file) {
+                if ($picFile) {
                     // CONFIGURAR el tamaño mínimo
                     $this->imageService->setImageMinDimension(800);
+                    $this->imageService->setGenerateThumbnails(false);
 
                     try {
                         $data['pic'] = $this->imageService->processSquareImage(
-                            $file,
-                            $topicPath, 
+                            $picFile,
+                            $categoryPath, 
                             $data['txt_short'],
                             $category->pic
                         );
@@ -230,20 +339,24 @@ class CategoryController extends BaseController
                 }
             }
 
-            // LÓGICA PARA LA IMAGEN DE BLOQUE (block_pic)
-            if ($data['delete_block_pic'] == '1') {
+            // LÓGICA PARA LA IMAGEN DE FONDO (bg)
+            if ($data['delete_bg'] == '1') {
                 // ELIMINAR imagen existente
-                if ($category->bg && file_exists($topicPath . $category->bg)) {
-                    $this->imageService->deleteBrandImage($category->bg, $topicPath);
+                if ($category->bg && file_exists($categoryPath . $category->bg)) {
+                    $this->imageService->deleteBrandImage($category->bg, $categoryPath);
                 }
                 $data['bg'] = null;
             } else {
                 // Verificar si hay nuevo archivo (ya obtenido al inicio)
-                if ($bg) {
+                if ($bgFile) {
+
+                    //$this->imageService->setImageMinRatio(1.5);
+                    //$this->imageService->setImageMaxRatio(2.5);
+
                     try {
                         $data['bg'] = $this->imageService->processLandscapeImage(
-                            $bg,
-                            $topicPath, 
+                            $bgFile,
+                            $categoryPath, 
                             $data['txt_short'], 
                             $category->bg
                         );
@@ -253,17 +366,32 @@ class CategoryController extends BaseController
                 }
             }
 
-            // Actualizar categoria usando la instancia (MÁS EFICIENTE)
+            // Actualizar categoría en la base de datos
             $category->save($data);
-            
             return redirect((string) url('category_index'))->with('success', 'Categoría actualizada correctamente.');
 
-        } catch (ModelNotFoundException $e) {
-            return redirect((string) url('category_index'))->with('error', 'Categoría no encontrada');
         } catch (\InvalidArgumentException $e) {
             return redirect((string) url('category_edit', ['id' => $id]))->with('error', $e->getMessage());
         } catch (\Exception $e) {
             return redirect((string) url('category_edit', ['id' => $id]))->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Elimina permanentemente una categoría de la base de datos
+     * 
+     * @param Request $request Solicitud HTTP
+     * @param int $id ID de la categoría a eliminar permanentemente
+     * @return \think\response\Redirect
+     */
+    public function forceDelete(Request $request, int $id): Redirect
+    {
+        try {
+            $category = Category::onlyTrashed()->findOrFail($id);
+            $category->force()->delete();
+            return redirect((string) url('category_index'))->with('success', 'Categoría eliminada permanentemente.');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('category_index'))->with('error', 'Categoría no encontrada o ya fue eliminada permanentemente.');
         }
     }
 

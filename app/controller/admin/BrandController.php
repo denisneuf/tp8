@@ -104,21 +104,17 @@ class BrandController extends BaseController
     {
         $data = $request->post();
         // 1. PRIMERO validar (FUERA del try-catch)
-        if (!$this->brandValidator->check($data)) {
+        if (!$this->brandValidator->scene('save')->check($data)) {
 
             $error = $this->brandValidator->getError(); // Esto devuelve un array en ThinkPHP 8
             // Devuelve ['code' => campo, 'msg' => mensaje]
-
             $errorField = $error['code'];
             $errorMessage = $error['msg'];
-
-            
             // Limpiar solo el campo con error
             $cleanData = $data;
             if (isset($cleanData[$errorField])) {
                 $cleanData[$errorField] = '';
             }
-
 
             return redirect((string) url('brand_create'))
                 ->with('old_data', $cleanData)
@@ -204,14 +200,11 @@ class BrandController extends BaseController
     {
         $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
-
         $oldData = Session::get('old_data');
         $errorField = Session::get('error_field');
 
         try {
             $brand = Brand::findOrFail($id);
-
-            //View::assign('success', $successMessage);
             View::assign('error', $errorMessage);
             View::assign('brand', $brand);
             View::assign('old_data', $oldData);
@@ -259,31 +252,7 @@ class BrandController extends BaseController
         $basePath = app()->getRootPath() . 'public/static/img/';
         $topicPath = $basePath . 'brand/';
 
-
-
-        // Establecer el escenario base
-        $this->brandValidator->scene('update');
-
-        // Obtener las reglas actuales y modificar condicionalmente
-        $rules = $this->brandValidator->getRule();
-
-        if ($data['brand_en'] !== $brand->brand_en) {
-            $rules['brand_en'] = 'require|max:100|unique:brands,brand_en,' . $id;
-        } else {
-            $rules['brand_en'] = 'require|max:100';
-        }
-
-        if ($data['slug'] !== $brand->slug) {
-            $rules['slug'] = 'require|max:100|unique:brands,slug,' . $id;
-        } else {
-            $rules['slug'] = 'require|max:100';
-        }
-
-        // Aplicar las reglas modificadas
-        $this->brandValidator->rule($rules);
-
-        if (!$this->brandValidator->check($data)) {
-        //if (!$this->brandValidator->scene('update')->check($data)) {
+        if (!$this->brandValidator->scene('update')->check($data)) {
 
             $error = $this->brandValidator->getError();
             $errorField = $error['code'];
@@ -300,9 +269,6 @@ class BrandController extends BaseController
                 ->with('old_data', $cleanData)
                 ->with('error', $errorMessage)
                 ->with('error_field', $errorField);
-
-
-            //return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $errorMessage);
         }
 
 
@@ -315,15 +281,12 @@ class BrandController extends BaseController
             
             if ($exists) {
 
-
-
                 // Limpiar solo el campo con error
                 $cleanData = $data;
                 $error_content = $cleanData['brand_en'];
                 if (isset($cleanData['brand_en'])) {
                     $cleanData['brand_en'] = '';
                 }
-
 
                 return redirect((string) url('brand_edit', ['id' => $id]))
                     ->with('old_data', $cleanData)
@@ -339,12 +302,9 @@ class BrandController extends BaseController
             
             if ($exists) {
 
-
                 // Limpiar solo el campo con error
                 $cleanData = $data;
-
                 $error_content = $cleanData['slug'];
-
                 if (isset($cleanData['slug'])) {
                     $cleanData['slug'] = '';
                 }
@@ -355,11 +315,6 @@ class BrandController extends BaseController
                     ->with('error_field', 'slug');
             }
         }
-
-
-
-
-
 
         try {
             // Inicializar campos de eliminación si no existen
@@ -439,9 +394,13 @@ class BrandController extends BaseController
      */
     public function forceDelete(Request $request, int $id): Redirect
     {
-        $brand = Brand::onlyTrashed()->findOrFail($id);
-        $brand->force()->delete();
-        return redirect((string) url('brand_index'))->with('success', 'Marca eliminada permanentemente.');
+        try {
+            $brand = Brand::onlyTrashed()->findOrFail($id);
+            $brand->force()->delete();
+            return redirect((string) url('brand_index'))->with('success', 'Marca eliminada permanentemente.');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('brand_index'))->with('error', 'Marca no encontrada o ya fue eliminada permanentemente.');
+        }
     }
 
 

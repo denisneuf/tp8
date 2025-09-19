@@ -3,449 +3,429 @@
 {block name="content"}
 
     <!-- Alertas de notificación -->
+    <!-- Alertas de notificación -->
     {if isset($error)}
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-circle mr-2"></i>
             <strong>Error:</strong> {$error}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
+    {if isset($old_data) && $old_data}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>DEBUG Old Data:</strong>
+            <pre>{:print_r($old_data, true)}</pre>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+    {if isset($error_field)}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <strong>DEBUG Error Field:</strong> {$error_field}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {/if}
 
     <!-- Tarjeta principal del formulario -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-edit me-2"></i>Editando: {$category.txt_short|default='Nueva Categoría'}
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-edit me-2"></i>Editando: {$category.txt_short|default='Categoría'}
             </h6>
-            <a href="{:url('brand_index')}" class="btn btn-secondary btn-sm">
-                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            <a href="{:url('category_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver
             </a>
         </div>
         <div class="card-body">
             <form action="{:url('category_update', ['id' => $category.id])}" method="post" novalidate enctype="multipart/form-data">
                 {:token_field()}
                 
-                <!-- Información Básica -->
-                <div class="mb-3">
-                    <label for="txt_short" class="form-label">Texto corto *</label>
-                    <input type="text" class="form-control" name="txt_short" id="txt_short" 
-                           value="{$category.txt_short|default=''}" required>
-                    <div class="form-text">Nombre principal de la categoría</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="txt_long" class="form-label">Texto largo *</label>
-                    <input type="text" class="form-control" name="txt_long" id="txt_long" 
-                           value="{$category.txt_long|default=''}" required>
-                    <div class="form-text">Nombre completo de la categoría</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="slug" class="form-label">Slug *</label>
-                    <input type="text" class="form-control" name="slug" id="slug" 
-                           value="{$category.slug|default=''}" required>
-                    <div class="form-text">Identificador único para URLs</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="description" class="form-label">Descripción</label>
-                    <textarea class="form-control" name="description" id="description" rows="3">{$category.description|default=''}</textarea>
-                    <div class="form-text">Descripción detallada de la categoría</div>
-                </div>
-
-                <!-- Imágenes -->
-                <h5 class="mt-4 mb-3 border-bottom pb-2">
-                    <i class="fas fa-images me-2"></i>Imágenes de la Categoría
-                </h5>
-                
-
-                <!--
-                <div class="mb-3">
-                    <label for="pic" class="form-label">Imagen Principal</label>
-                    <input type="file" class="form-control" name="pic" id="pic" accept="image/*">
-                    <div class="form-text">Imagen cuadrada (mín. 800×800px)</div>
-                    
-                    {if $category.pic}
-                    <div class="mt-3">
-                        <p class="mb-1">Imagen actual:</p>
-                        <img src="/static/img/category/{$category.pic}" alt="Imagen actual" class="img-thumbnail" style="max-height: 150px;">
-                        <input type="hidden" name="existing_pic" value="{$category.pic}">
-                        <input type="hidden" name="delete_pic" id="delete_pic_input" value="0">
-                        <div class="mt-1">
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="remove-pic">
-                                <i class="fas fa-trash me-1"></i>Eliminar imagen
-                            </button>
+                <!-- Sección: Información Básica -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="txt_short" class="form-label">Texto corto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'txt_short'}is-invalid{/if}" 
+                                   name="txt_short" id="txt_short" required 
+                                   maxlength="100" value="{$category.txt_short|default=''}">
+                            {if isset($error_field) && $error_field == 'txt_short'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Este campo es obligatorio.</div>
                         </div>
-                    </div>
-                    {/if}
-                </div>
-            -->
-
-
-                <div class="mb-3">
-                    <label for="pic" class="form-label">Imagen Principal</label>
-                    <input type="file" class="form-control" name="pic" id="pic" accept="image/*">
-                    <div class="form-text">Imagen cuadrada (mín. 800×800px)</div>
-                    
-                        {if $category.pic}
-                        <div class="mt-3" id="current-pic-container">
-                            <p class="mb-1">Imagen actual:</p>
-                            <img src="/static/img/category/{$category.pic}" alt="Imagen actual" class="img-thumbnail" style="max-height: 150px;">
-                            <input type="hidden" name="existing_pic" value="{$category.pic}">
-                            <input type="hidden" name="delete_pic" id="delete_pic_input" value="0">
-                            <div class="mt-1">
-                                <button type="button" class="btn btn-sm btn-outline-danger" id="remove-pic">
-                                    <i class="fas fa-trash me-1"></i>Eliminar imagen
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" id="restore-pic" style="display: none;">
-                                    <i class="fas fa-undo me-1"></i>Restaurar imagen
+                        
+                        <div class="mb-3">
+                            <label for="txt_long" class="form-label">Texto largo <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'txt_long'}is-invalid{/if}" 
+                                   name="txt_long" id="txt_long" required 
+                                   maxlength="255" value="{$category.txt_long|default=''}">
+                            {if isset($error_field) && $error_field == 'txt_long'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. Este campo es obligatorio.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'slug'}is-invalid{/if}" 
+                                   name="slug" id="slug" required 
+                                   maxlength="100" value="{$category.slug|default=''}">
+                            {if isset($error_field) && $error_field == 'slug'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Usar solo letras, números y guiones.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bs_icon" class="form-label">Icono Bootstrap</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control {if isset($error_field) && $error_field == 'bs_icon'}is-invalid{/if}" 
+                                       name="bs_icon" id="bs_icon" 
+                                       maxlength="50" value="{$category.bs_icon|default=''}" 
+                                       placeholder="Ej: laptop" oninput="updateIconPreview()">
+                                <button type="button" class="btn btn-outline-secondary" onclick="openIconModal()">
+                                    <i class="bi bi-search"></i> Buscar
                                 </button>
                             </div>
+                            {if isset($error_field) && $error_field == 'bs_icon'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Nombre del icono de Bootstrap Icons.</div>
+                            <!-- Contenedor para previsualización del icono -->
+                            <div id="iconPreview" class="mt-2 p-3 border rounded text-center">
+                                {if $category.bs_icon}
+                                    <i class="bi bi-{$category.bs_icon}" style="font-size: 2rem;"></i>
+                                    <div class="text-muted small mt-1">{$category.bs_icon}</div>
+                                {else}
+                                    <i class="bi bi-box" style="font-size: 2rem;"></i>
+                                    <div class="text-muted small mt-1">Previsualización del icono</div>
+                                {/if}
+                            </div>
                         </div>
-                        {/if}
-                </div>
-
-                
-                <div class="mb-3">
-                    <label for="block_pic" class="form-label">Imagen de Bloque/Banner</label>
-                    <input type="file" class="form-control" name="block_pic" id="block_pic" accept="image/*">
-                    <div class="form-text">Relación 2:1 recomendada (ej. 1200×600px)</div>
+                    </div>
                     
-{if $category.bg}
-<div class="mt-3" id="current-block-pic-container">
-    <p class="mb-1">Imagen de bloque actual:</p>
-    <img src="/static/img/category/{$category.bg}" alt="Imagen de bloque" class="img-thumbnail" style="max-height: 150px;">
-    <input type="hidden" name="existing_block_pic" value="{$category.bg}">
-    <input type="hidden" name="delete_block_pic" id="delete_block_pic_input" value="0">
-    <div class="mt-1">
-        <button type="button" class="btn btn-sm btn-outline-danger" id="remove-block-pic">
-            <i class="fas fa-trash me-1"></i>Eliminar imagen
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-success" id="restore-block-pic" style="display: none;">
-            <i class="fas fa-undo me-1"></i>Restaurar imagen
-        </button>
-    </div>
-</div>
-{/if}
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-image me-2"></i>Imágenes</h5>
+                        
+                        <div class="mb-3">
+                            <label for="pic" class="form-label">Imagen principal</label>
+                            <input type="file" class="form-control {if isset($error_field) && $error_field == 'pic'}is-invalid{/if}" 
+                                   name="pic" id="pic" accept="image/*">
+                            {if isset($error_field) && $error_field == 'pic'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Imagen cuadrada recomendada (mínimo 800x800px).</div>
+                            <!-- Contenedor para previsualización de pic -->
+                            <div id="picPreview" class="mt-2"></div>
+                            
+                            <!-- Imagen actual -->
+                            {if $category.pic}
+                            <div class="mt-3" id="current-pic-container">
+                                <p class="mb-1">Imagen actual:</p>
+                                <img src="/static/img/category/{$category.pic}" alt="Imagen actual" class="img-thumbnail" style="max-height: 150px;">
+                                <input type="hidden" name="existing_pic" value="{$category.pic}">
+                                <input type="hidden" name="delete_pic" id="delete_pic_input" value="0">
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="remove-pic">
+                                        <i class="fas fa-trash me-1"></i>Eliminar imagen
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-success" id="restore-pic" style="display: none;">
+                                        <i class="fas fa-undo me-1"></i>Restaurar imagen
+                                    </button>
+                                </div>
+                            </div>
+                            {/if}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bg" class="form-label">Imagen de fondo</label>
+                            <input type="file" class="form-control {if isset($error_field) && $error_field == 'bg'}is-invalid{/if}" 
+                                   name="bg" id="bg" accept="image/*">
+                            {if isset($error_field) && $error_field == 'bg'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Imagen para fondo o banner de la categoría.</div>
+                            <!-- Contenedor para previsualización de bg -->
+                            <div id="bgPreview" class="mt-2"></div>
+                            
+                            <!-- Imagen actual -->
+                            {if $category.bg}
+                            <div class="mt-3" id="current-bg-container">
+                                <p class="mb-1">Imagen de fondo actual:</p>
+                                <img src="/static/img/category/{$category.bg}" alt="Imagen de fondo actual" class="img-thumbnail" style="max-height: 150px;">
+                                <input type="hidden" name="existing_bg" value="{$category.bg}">
+                                <input type="hidden" name="delete_bg" id="delete_bg_input" value="0">
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="remove-bg">
+                                        <i class="fas fa-trash me-1"></i>Eliminar imagen
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-success" id="restore-bg" style="display: none;">
+                                        <i class="fas fa-undo me-1"></i>Restaurar imagen
+                                    </button>
+                                </div>
+                            </div>
+                            {/if}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="visible" class="form-label">Visible</label>
+                            <select class="form-select {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                    name="visible" id="visible">
+                                <option value="1" {if $category.visible == 1}selected{/if}>Sí</option>
+                                <option value="0" {if $category.visible == 0}selected{/if}>No</option>
+                            </select>
+                            {if isset($error_field) && $error_field == 'visible'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Determina si la categoría es visible en el sitio.</div>
+                        </div>
+                    </div>
                 </div>
-
-
-
-                <div class="mb-3">
-                    <label>Visible</label>
-                    <select name="visible" class="form-control">
-                        <option value="0" {eq name="$category.visible" value="0"}selected{/eq}>No</option>
-                        <option value="1" {eq name="$category.visible" value="1"}selected{/eq}>Sí</option>
-                    </select>
+                
+                <!-- Sección: Descripción -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-text-paragraph me-2"></i>Descripción</h5>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción detallada</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'description'}is-invalid{/if}" 
+                                      name="description" id="description" 
+                                      rows="4" maxlength="2000">{$category.description|default=''}</textarea>
+                            {if isset($error_field) && $error_field == 'description'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 2000 caracteres. Descripción completa de la categoría.</div>
+                        </div>
+                    </div>
                 </div>
-
+                
                 <!-- Botones de acción -->
-                <div class="mt-5">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Guardar Cambios
                     </button>
-                    <a href="{:url('brand_index')}" class="btn btn-secondary btn-lg ms-2">
-                        <i class="fas fa-times me-2"></i>Cancelar
+                    <a href="{:url('category_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
                     </a>
                 </div>
             </form>
         </div>
     </div>
 
-
-
-<!-- Modal de Confirmación para Eliminar Imágenes -->
-<div class="modal fade" id="deleteImagesModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                    Confirmar eliminación
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que quieres eliminar las imágenes seleccionadas?</p>
-                <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
-                <div id="modalImagesList"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancelar
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">
-                    <i class="fas fa-trash me-1"></i>Sí, eliminar imágenes
-                </button>
+    <!-- Modal para buscar iconos -->
+    <div class="modal fade" id="iconModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Buscar Icono Bootstrap</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" id="iconSearch" class="form-control" placeholder="Buscar iconos...">
+                    </div>
+                    <div id="iconGrid" class="row row-cols-4 g-2" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Los iconos se cargarán aquí -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
+{/block}
 
-
-
+{block name="scripts"}
 <script>
+// Lista de iconos Bootstrap comunes
+const bootstrapIcons = [
+    'alarm', 'archive', 'arrow-left', 'arrow-right', 'bag', 'bell', 'book', 'box', 
+    'briefcase', 'calendar', 'camera', 'cart', 'chat', 'check', 'clock', 'cloud', 
+    'code', 'collection', 'cpu', 'credit-card', 'database', 'display', 'download', 
+    'eye', 'file', 'flag', 'folder', 'gear', 'graph-up', 'grid', 'heart', 'house', 
+    'image', 'info', 'key', 'laptop', 'lightbulb', 'link', 'list', 'lock', 'map', 
+    'megaphone', 'menu', 'moon', 'music', 'paperclip', 'pencil', 'people', 'person', 
+    'phone', 'play', 'plus', 'printer', 'question', 'search', 'send', 'server', 
+    'shield', 'star', 'tag', 'trash', 'truck', 'upload', 'wifi', 'x'
+];
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Actualizar label de inputs de archivo
-    document.querySelectorAll('input[type="file"]').forEach(function(input) {
-        input.addEventListener('change', function(e) {
-            var fileName = e.target.files[0] ? e.target.files[0].name : 'Seleccionar archivo';
-            var label = this.nextElementSibling;
-            if (label && label.classList.contains('custom-file-label')) {
-                label.textContent = fileName;
+    // Validación básica del formulario
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar campos requeridos
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
             }
         });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor, complete los campos obligatorios marcados con *.');
+        }
     });
     
-    // Generar slug automáticamente desde el nombre en inglés
-    const brandEnInput = document.getElementById('brand_en');
+    // Auto-generar slug desde txt_short
+    const txtShortInput = document.getElementById('txt_short');
     const slugInput = document.getElementById('slug');
     
-    if (brandEnInput && slugInput) {
-        // Guardar el valor original del slug
-        if (!slugInput.dataset.original) {
-            slugInput.dataset.original = slugInput.value;
-        }
-        
-        brandEnInput.addEventListener('blur', function() {
-            if (!slugInput.value || slugInput.value === slugInput.dataset.original) {
-                const slug = brandEnInput.value
+    if (txtShortInput && slugInput) {
+        txtShortInput.addEventListener('blur', function() {
+            if (!slugInput.value) {
+                const slug = this.value
                     .toLowerCase()
-                    .trim()
-                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
-                    .replace(/[^a-z0-9 -]/g, '') // Eliminar caracteres no válidos
-                    .replace(/\s+/g, '-') // Reemplazar espacios con guiones
-                    .replace(/-+/g, '-'); // Eliminar guiones múltiples
-                
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
                 slugInput.value = slug;
             }
         });
     }
     
-    // Función para configurar botones de eliminar/restaurar
-    function setupImageButtons(removeBtnId, restoreBtnId, deleteInputId, containerId, fileInputName) {
+    // Previsualización de imágenes
+    const picInput = document.getElementById('pic');
+    const bgInput = document.getElementById('bg');
+    
+    function createPreview(input, previewId) {
+        const previewContainer = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `
+                    <div class="mt-2">
+                        <img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px; max-width: 100%;">
+                        <button type="button" class="btn btn-sm btn-danger mt-2" onclick="document.getElementById('${previewId}').innerHTML=''">
+                            <i class="bi bi-x-circle"></i> Eliminar previsualización
+                        </button>
+                    </div>
+                `;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    if (picInput) {
+        picInput.addEventListener('change', function() {
+            createPreview(this, 'picPreview');
+        });
+    }
+    
+    if (bgInput) {
+        bgInput.addEventListener('change', function() {
+            createPreview(this, 'bgPreview');
+        });
+    }
+    
+    // Configurar botones de eliminar/restaurar imágenes
+    function setupImageButtons(removeBtnId, restoreBtnId, deleteInputId, containerId, fileInputId) {
         const removeBtn = document.getElementById(removeBtnId);
         const restoreBtn = document.getElementById(restoreBtnId);
         const deleteInput = document.getElementById(deleteInputId);
         const container = document.getElementById(containerId);
+        const fileInput = document.getElementById(fileInputId);
         
         if (!removeBtn || !deleteInput || !container) return;
         
-        // Evento para eliminar imagen
         removeBtn.addEventListener('click', function() {
             deleteInput.value = '1';
-            
-            // Ocultar imagen y botón de eliminar
             const img = container.querySelector('img');
             if (img) img.style.display = 'none';
             removeBtn.style.display = 'none';
-            
-            // Mostrar botón de restaurar
             if (restoreBtn) restoreBtn.style.display = 'block';
-            
-            // Mostrar mensaje de eliminación
-            const existingMessage = container.querySelector('.delete-message');
-            if (!existingMessage) {
-                const message = document.createElement('div');
-                message.className = 'alert alert-warning mt-2 delete-message';
-                message.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>La imagen se eliminará al guardar';
-                container.appendChild(message);
-            }
-            
-            // Deshabilitar input de archivo
-            const fileInput = document.querySelector(`input[name="${fileInputName}"]`);
-            if (fileInput) fileInput.disabled = true;
+            if (fileInput) fileInput.disabled = false;
         });
         
-        // Evento para restaurar imagen (si el botón existe)
         if (restoreBtn) {
             restoreBtn.addEventListener('click', function() {
                 deleteInput.value = '0';
-                
-                // Mostrar imagen y botón de eliminar
                 const img = container.querySelector('img');
                 if (img) img.style.display = 'block';
                 removeBtn.style.display = 'block';
-                
-                // Ocultar botón de restaurar
                 restoreBtn.style.display = 'none';
-                
-                // Eliminar mensaje de eliminación
-                const message = container.querySelector('.delete-message');
-                if (message) message.remove();
-                
-                // Habilitar input de archivo
-                const fileInput = document.querySelector(`input[name="${fileInputName}"]`);
                 if (fileInput) fileInput.disabled = false;
             });
         }
     }
     
-    // Configurar botones para imagen principal
-    setupImageButtons(
-        'remove-pic', 
-        'restore-pic', 
-        'delete_pic_input', 
-        'current-pic-container',
-        'pic'
-    );
+    // Configurar botones para imágenes
+    setupImageButtons('remove-pic', 'restore-pic', 'delete_pic_input', 'current-pic-container', 'pic');
+    setupImageButtons('remove-bg', 'restore-bg', 'delete_bg_input', 'current-bg-container', 'bg');
     
-    // Configurar botones para imagen de bloque
-    setupImageButtons(
-        'remove-block-pic', 
-        'restore-block-pic', 
-        'delete_block_pic_input', 
-        'current-block-pic-container',
-        'block_pic'
-    );
+    // Inicializar previsualización del icono
+    updateIconPreview();
+});
+
+// Función para actualizar la previsualización del icono
+function updateIconPreview() {
+    const iconInput = document.getElementById('bs_icon');
+    const iconPreview = document.getElementById('iconPreview');
+    const iconName = iconInput.value.trim();
     
-    // Crear modal de confirmación para eliminación de imágenes
-    const confirmationModal = document.createElement('div');
-    confirmationModal.className = 'modal fade';
-    confirmationModal.id = 'deleteImagesModal';
-    confirmationModal.tabIndex = '-1';
-    confirmationModal.innerHTML = `
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                        Confirmar eliminación
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>¿Estás seguro de que quieres eliminar las imágenes seleccionadas?</p>
-                    <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
-                    <div id="modalImagesList"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancelar
-                    </button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">
-                        <i class="fas fa-trash me-1"></i>Sí, eliminar imágenes
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(confirmationModal);
-    
-    // Variable para guardar el evento de submit
-    let formSubmitEvent = null;
-    
-    // Validación del formulario con modal de confirmación
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            // Validar campos obligatorios primero
-            const requiredFields = form.querySelectorAll('[required]');
-            let isValid = true;
-            
-            requiredFields.forEach(function(field) {
-                if (!field.value.trim()) {
-                    isValid = false;
-                    field.classList.add('is-invalid');
-                } else {
-                    field.classList.remove('is-invalid');
-                }
-            });
-            
-            if (!isValid) {
-                e.preventDefault();
-                // Mostrar alerta general
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-                alertDiv.innerHTML = `
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    <strong>Error:</strong> Por favor, complete todos los campos obligatorios.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                `;
-                form.prepend(alertDiv);
-                
-                // Scroll al primer error
-                const firstError = form.querySelector('.is-invalid');
-                if (firstError) {
-                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    firstError.focus();
-                }
-                return;
-            }
-            
-            // Verificar si hay imágenes marcadas para eliminar
-            const deletePicInput = document.getElementById('delete_pic_input');
-            const deleteBlockPicInput = document.getElementById('delete_block_pic_input');
-            
-            const hasImagesToDelete = (deletePicInput && deletePicInput.value === '1') || 
-                                     (deleteBlockPicInput && deleteBlockPicInput.value === '1');
-            
-            if (hasImagesToDelete) {
-                e.preventDefault();
-                formSubmitEvent = e;
-                
-                // Preparar contenido del modal
-                const modalImagesList = document.getElementById('modalImagesList');
-                modalImagesList.innerHTML = '';
-                
-                if (deletePicInput && deletePicInput.value === '1') {
-                    const existingPic = document.querySelector('input[name="existing_pic"]');
-                    if (existingPic) {
-                        modalImagesList.innerHTML += `
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-image text-primary me-2"></i>
-                                <span>Imagen principal: ${existingPic.value}</span>
-                            </div>
-                        `;
-                    }
-                }
-                
-                if (deleteBlockPicInput && deleteBlockPicInput.value === '1') {
-                    const existingBlockPic = document.querySelector('input[name="existing_block_pic"]');
-                    if (existingBlockPic) {
-                        modalImagesList.innerHTML += `
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-images text-info me-2"></i>
-                                <span>Imagen de bloque: ${existingBlockPic.value}</span>
-                            </div>
-                        `;
-                    }
-                }
-                
-                // Mostrar modal
-                const modal = new bootstrap.Modal(document.getElementById('deleteImagesModal'));
-                modal.show();
-            }
-        });
+    if (iconName) {
+        iconPreview.innerHTML = `
+            <i class="bi bi-${iconName}" style="font-size: 2rem;"></i>
+            <div class="text-muted small mt-1">${iconName}</div>
+        `;
+    } else {
+        iconPreview.innerHTML = `
+            <i class="bi bi-box" style="font-size: 2rem;"></i>
+            <div class="text-muted small mt-1">Previsualización del icono</div>
+        `;
     }
+}
+
+// Función para abrir el modal de búsqueda de iconos
+function openIconModal() {
+    const modal = new bootstrap.Modal(document.getElementById('iconModal'));
+    loadIcons();
+    modal.show();
+}
+
+// Función para cargar iconos en el modal
+function loadIcons(searchTerm = '') {
+    const iconGrid = document.getElementById('iconGrid');
+    const filteredIcons = bootstrapIcons.filter(icon => 
+        icon.includes(searchTerm.toLowerCase())
+    );
     
-    // Configurar botón de confirmación del modal
-    document.getElementById('confirmDelete')?.addEventListener('click', function() {
-        if (formSubmitEvent) {
-            // Cerrar modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteImagesModal'));
-            modal.hide();
-            
-            // Re-enviar el formulario
-            form.submit();
-        }
-    });
+    iconGrid.innerHTML = filteredIcons.map(icon => `
+        <div class="col">
+            <button type="button" class="btn btn-outline-primary w-100 h-100 p-2" 
+                    onclick="selectIcon('${icon}')">
+                <i class="bi bi-${icon}" style="font-size: 1.5rem;"></i>
+                <div class="small mt-1">${icon}</div>
+            </button>
+        </div>
+    `).join('');
+}
+
+// Función para seleccionar un icono
+function selectIcon(iconName) {
+    document.getElementById('bs_icon').value = iconName;
+    updateIconPreview();
     
-    // Funcionalidad adicional: Permitir restaurar con la tecla ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const restorePicBtn = document.getElementById('restore-pic');
-            const restoreBlockPicBtn = document.getElementById('restore-block-pic');
-            
-            if (restorePicBtn && restorePicBtn.style.display === 'block') {
-                restorePicBtn.click();
-            } else if (restoreBlockPicBtn && restoreBlockPicBtn.style.display === 'block') {
-                restoreBlockPicBtn.click();
-            }
-        }
-    });
+    // Cerrar el modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('iconModal'));
+    modal.hide();
+}
+
+// Buscar iconos en tiempo real
+document.getElementById('iconSearch')?.addEventListener('input', function(e) {
+    loadIcons(e.target.value);
 });
 </script>
 {/block}

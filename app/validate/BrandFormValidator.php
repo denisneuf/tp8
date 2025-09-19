@@ -53,19 +53,27 @@ class BrandFormValidator extends Validate
 
 
     protected $scene = [
-        'create' => [
-            'brand_en' => 'require|max:100|unique:brands',
-            'slug'     => 'require|max:100|unique:brands',
-            'brand_cn', 'meta_title', 'meta_description', 'keywords',
+        'save' => [
+            'brand_en', 'slug', 'brand_cn', 'meta_title', 'meta_description', 'keywords',
             'txt_description', 'block_description', 'pic', 'block_pic',
             'email', 'telephone', 'direccion', 'fax', 'web'
         ],
         'update' => [
-            'brand_en' => 'require|max:30',
-            'slug'     => 'require|max:50|alphaDash',
-            'brand_cn', 'meta_title', 'meta_description', 'keywords',
-            'txt_description', 'block_description', 'pic', 'block_pic',
-            'email', 'telephone', 'direccion', 'fax', 'web'
+            'brand_en' => 'require|max:30|unique:brands,brand_en,{id}',
+            'slug' => 'require|max:50|alphaDash|unique:brands,slug,{id}',
+            'brand_cn' => 'max:100',
+            'meta_title' => 'max:255',
+            'meta_description' => 'max:1000',
+            'keywords' => 'max:255',
+            'txt_description' => 'max:2000',
+            'block_description' => 'max:2000',
+            'pic' => 'max:255',
+            'block_pic' => 'max:255',
+            'email' => 'email|max:100',
+            'telephone' => 'max:50',
+            'direccion' => 'max:255',
+            'fax' => 'max:50',
+            'web' => 'url|max:255'
         ]
     ];
 

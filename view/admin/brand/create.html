@@ -104,6 +104,8 @@
                                 <div class="invalid-feedback">{$error}</div>
                             {/if}
                             <div class="form-text">Imagen cuadrada recomendada (mínimo 800x800px).</div>
+                            <!-- Contenedor para previsualización de pic -->
+                            <div id="picPreview" class="mt-2"></div>
                         </div>
                         
                         <div class="mb-3">
@@ -114,6 +116,8 @@
                                 <div class="invalid-feedback">{$error}</div>
                             {/if}
                             <div class="form-text">Imagen horizontal para bloques destacados.</div>
+                            <!-- Contenedor para previsualización de block_pic -->
+                            <div id="blockPicPreview" class="mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -306,6 +310,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     .replace(/(^-|-$)/g, '');
                 slugInput.value = slug;
             }
+        });
+    }
+    
+    // Previsualización de imágenes
+    const picInput = document.getElementById('pic');
+    const blockPicInput = document.getElementById('block_pic');
+    
+    function createPreview(input, previewId) {
+        const previewContainer = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `
+                    <div class="mt-2">
+                        <img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px; max-width: 100%;">
+                        <button type="button" class="btn btn-sm btn-danger mt-2" onclick="document.getElementById('${previewId}').innerHTML=''">
+                            <i class="bi bi-x-circle"></i> Eliminar previsualización
+                        </button>
+                    </div>
+                `;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    if (picInput) {
+        picInput.addEventListener('change', function() {
+            createPreview(this, 'picPreview');
+        });
+    }
+    
+    if (blockPicInput) {
+        blockPicInput.addEventListener('change', function() {
+            createPreview(this, 'blockPicPreview');
         });
     }
 });

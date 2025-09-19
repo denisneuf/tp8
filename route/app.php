@@ -96,6 +96,7 @@ Route::group('admin/category', function () {
     Route::post('update', 'app\controller\admin\CategoryController@update')->pattern(['id' => '\d+'])->name('category_update');
     Route::post('delete', 'app\controller\admin\CategoryController@delete')->pattern(['id' => '\d+'])->name('category_delete');
     Route::post('restore', 'app\controller\admin\CategoryController@restore')->pattern(['id' => '\d+'])->name('category_restore');
+    Route::post('force-delete', 'app\controller\admin\CategoryController@forceDelete')->name('category_force_delete');
 })->middleware('admin')->middleware('adminmenu');
 
 Route::group('admin/product_type', function () {

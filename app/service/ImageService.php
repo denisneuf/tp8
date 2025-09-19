@@ -28,6 +28,32 @@ class ImageService
     private int $imageMinDimension;
     private float $imageMinRatio;
     private float $imageMaxRatio;
+    private bool $generateThumbnails = true; // Nuevo: flag para controlar thumbnails
+
+
+
+    /**
+     * Constructor para inicializar valores por defecto
+     */
+    public function __construct()
+    {
+        // Inicializar valores por defecto
+        $this->imageMinDimension = self::IMAGE_MIN_DIMENSION;
+        $this->imageMinRatio = self::IMAGE_MIN_RATIO;
+        $this->imageMaxRatio = self::IMAGE_MAX_RATIO;
+    }
+
+    public function setGenerateThumbnails(bool $generate): self
+    {
+        $this->generateThumbnails = $generate;
+        return $this;
+    }
+
+    public function getGenerateThumbnails(): bool
+    {
+        return $this->generateThumbnails;
+    }
+
 
     // Métodos setters y getters existentes...
     public function setImageMinDimension(int $dimension): self
@@ -82,7 +108,7 @@ class ImageService
     /**
      * Procesa la imagen del logo de la marca con validaciones y genera múltiples tamaños
      */
-    public function processSquareImage(File $file, string $path, string $brandName, ?string $oldFilename = null): string
+    public function processSquareImage(File $file, string $path, string $brandName, ?string $oldFilename = null, ?bool $generateThumbnails = null): string
     {
         Log::info('ImageService - imageMinDimension actual: ' . $this->imageMinDimension);
 
@@ -103,7 +129,15 @@ class ImageService
             throw new \RuntimeException("La imagen debe ser de al menos " . $this->imageMinDimension . "x" . $this->imageMinDimension . " píxeles");
         }
 
-        return $this->saveImageWithThumbnails($file, $path, $brandName, $oldFilename);
+        //return $this->saveImageWithThumbnails($file, $path, $brandName, $oldFilename);
+        // Usar el parámetro específico o la configuración general
+        $shouldGenerateThumbnails = $generateThumbnails ?? $this->generateThumbnails;
+
+        if ($shouldGenerateThumbnails) {
+            return $this->saveImageWithThumbnails($file, $path, $brandName, $oldFilename);
+        } else {
+            return $this->saveImage($file, $path, $brandName, $oldFilename);
+        }
     }
 
     /**
