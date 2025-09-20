@@ -119,6 +119,35 @@
                             <!-- Contenedor para previsualización de block_pic -->
                             <div id="blockPicPreview" class="mt-2"></div>
                         </div>
+
+
+
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <!-- Campo hidden para enviar valor 0 cuando no esté marcado -->
+                                <input type="hidden" name="visible" value="0">
+                                
+                                <!-- Checkbox marcado por defecto con "checked" -->
+                                <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                       type="checkbox" 
+                                       id="visible" 
+                                       name="visible" 
+                                       value="1"
+                                       {if !isset($old_data.visible) || (isset($old_data.visible) && $old_data.visible == 1)}checked{/if}>
+                                
+                                <label class="form-check-label" for="visible">
+                                    Visible
+                                </label>
+                                {if isset($error_field) && $error_field == 'visible'}
+                                    <div class="invalid-feedback">{$error}</div>
+                                {/if}
+                                <div class="form-text">Determina si la marca es visible en el sitio.</div>
+                            </div>
+                        </div>
+
+
+
                     </div>
                 </div>
                 

@@ -129,6 +129,34 @@
                             </div>
                             {/if}
                         </div>
+
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <!-- Campo hidden que siempre enviará el valor 0 cuando el checkbox no esté marcado -->
+                                <input type="hidden" name="visible" value="0">
+                                
+                                <!-- Checkbox que enviará valor 1 cuando esté marcado -->
+                                <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                       type="checkbox" 
+                                       id="visible" 
+                                       name="visible" 
+                                       value="1"
+                                       {if $brand.visible == 1}checked{/if}>
+                                
+                                <label class="form-check-label" for="visible">
+                                    Visible
+                                </label>
+                                {if isset($error_field) && $error_field == 'visible'}
+                                    <div class="invalid-feedback">{$error}</div>
+                                {/if}
+                                <div class="form-text">Determina si la marca es visible en el sitio.</div>
+                            </div>
+                        </div>
+
+
+
+
                     </div>
                 </div>
                 

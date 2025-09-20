@@ -59,7 +59,7 @@ class CategoryFormValidator extends Validate
             'slug'      => "require|max:100|alphaDash|unique:categories,slug,{$id},id",
         ]);
 
-        return $this; // 👈 esto es clave
+        return $this;
     }
 
 }

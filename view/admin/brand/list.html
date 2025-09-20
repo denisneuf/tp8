@@ -35,6 +35,7 @@
                         <th>Nombre (EN)</th>
                         <th>Nombre (CN)</th>
                         <th>Slug</th>
+                        <th>Visible</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -55,6 +56,7 @@
                         <td>{$brand.brand_en}</td>
                         <td>{$brand.brand_cn}</td>
                         <td>{$brand.slug}</td>
+                        <td>{if $brand.visible}Sí{else}No{/if}</td>
                         <td>
                             {if !$brand.delete_time}
                                 <span class="badge bg-success">Activa</span>
