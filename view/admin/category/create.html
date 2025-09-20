@@ -141,44 +141,28 @@
                             <!-- Contenedor para previsualización de bg -->
                             <div id="bgPreview" class="mt-2"></div>
                         </div>
-<div class="mb-3">
-    <div class="form-check form-switch">
-        <!-- Campo hidden para enviar valor 0 cuando no esté marcado -->
-        <input type="hidden" name="visible" value="0">
-        
-        <!-- Checkbox marcado por defecto con "checked" -->
-        <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
-               type="checkbox" 
-               id="visible" 
-               name="visible" 
-               value="1"
-               {if !isset($old_data.visible) || (isset($old_data.visible) && $old_data.visible == 1)}checked{/if}>
-        
-        <label class="form-check-label" for="visible">
-            Visible
-        </label>
-        {if isset($error_field) && $error_field == 'visible'}
-            <div class="invalid-feedback">{$error}</div>
-        {/if}
-        <div class="form-text">Determina si la categoría es visible en el sitio.</div>
-    </div>
-</div>
-                        <!--
-                        
                         <div class="mb-3">
-                            <label for="visible" class="form-label">Visible</label>
-                            <select class="form-select {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
-                                    name="visible" id="visible">
-                                <option value="1" {if isset($old_data.visible) && $old_data.visible == 1}selected{/if}>Sí</option>
-                                <option value="0" {if isset($old_data.visible) && $old_data.visible == 0}selected{/if}>No</option>
-                            </select>
-                            {if isset($error_field) && $error_field == 'visible'}
-                                <div class="invalid-feedback">{$error}</div>
-                            {/if}
-                            <div class="form-text">Determina si la categoría es visible en el sitio.</div>
+                            <div class="form-check form-switch">
+                                <!-- Campo hidden para enviar valor 0 cuando no esté marcado -->
+                                <input type="hidden" name="visible" value="0">
+                                
+                                <!-- Checkbox marcado por defecto con "checked" -->
+                                <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                       type="checkbox" 
+                                       id="visible" 
+                                       name="visible" 
+                                       value="1"
+                                       {if !isset($old_data.visible) || (isset($old_data.visible) && $old_data.visible == 1)}checked{/if}>
+                                
+                                <label class="form-check-label" for="visible">
+                                    Visible
+                                </label>
+                                {if isset($error_field) && $error_field == 'visible'}
+                                    <div class="invalid-feedback">{$error}</div>
+                                {/if}
+                                <div class="form-text">Determina si la categoría es visible en el sitio.</div>
+                            </div>
                         </div>
-
-                    -->
                     </div>
                 </div>
                 
