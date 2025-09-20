@@ -249,20 +249,6 @@ class CategoryController extends BaseController
         $basePath = app()->getRootPath() . 'public/static/img/';
         $categoryPath = $basePath . 'category/';
 
-
-
-        /*
-        $data = [
-            'name'  => 'thinkphp',
-            'age'   => 10,
-            'email' => 'thinkphp@qq.com',
-        ];
-        */
-
-        dump($id); // el id que llega
-        dump($data); // datos enviados
-
-
         try {
             if (!$this->categoryValidator->sceneUpdate($id)->check($data)) {
                 $error = $this->categoryValidator->getError();
@@ -285,8 +271,6 @@ class CategoryController extends BaseController
             dump($e->getError());
         }
 
-
-
         try {
             // Inicializar campos de eliminación si no existen
             $data['delete_pic'] = $data['delete_pic'] ?? '0';
@@ -299,6 +283,7 @@ class CategoryController extends BaseController
                     $this->imageService->deleteBrandImage($category->pic, $categoryPath);
                 }
                 $data['pic'] = null;
+                
             } else {
                 // Verificar si hay nuevo archivo (ya obtenido al inicio)
                 if ($picFile) {

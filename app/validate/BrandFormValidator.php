@@ -51,7 +51,7 @@ class BrandFormValidator extends Validate
     ];
 
 
-
+    /*
     protected $scene = [
         'save' => [
             'brand_en', 'slug', 'brand_cn', 'meta_title', 'meta_description', 'keywords',
@@ -76,6 +76,42 @@ class BrandFormValidator extends Validate
             'web' => 'url|max:255'
         ]
     ];
+    */
+
+
+    public function sceneUpdate(int $id)
+    {
+        // Filtramos los campos que queremos validar
+        $this->only([
+            'brand_en',
+            'slug',
+            'brand_cn',
+            'meta_title',
+            'meta_description',
+            'keywords',
+            'txt_description',
+            'block_description',
+            'pic',
+            'block_pic',
+            'email',
+            'telephone',
+            'direccion',
+            'fax',
+            'web'
+        ]);
+
+        // Quitamos las reglas base de txt_short y slug (que tenían unique sin id)
+        $this->removeRule(['brand_en', 'slug']);
+
+        // Añadimos las reglas correctas para update
+        $this->rule([
+            'brand_en' => "require|max:30|unique:brands,brand_en,{$id},id",
+            'slug'     => "require|max:50|alphaDash|unique:brands,slug,{$id},id",
+        ]);
+
+        return $this; // 👈 esto es clave
+    }
+
 
 
 }
