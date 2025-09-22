@@ -63,24 +63,6 @@ class LoginController extends BaseController
         if ($user && $user->checkPassword($data['password'])) {
             Session::set('admin_user', $user->toArray());
             Session::regenerate();
-
-            // Redirección segura
-            /*
-            if (is_string($redirect) && $redirect !== '') {
-                $decoded = base64_decode($redirect, true);
-                if ($decoded && str_starts_with($decoded, '/')) {
-                    return redirect($decoded);
-                }
-            }
-            */
-            /*
-            if ($redirect) {
-                return redirect(base64_decode($redirect));
-            }
-
-            return redirect('/admin/dashboard');
-            */
-
             // Redirección segura mejorada
             if (is_string($redirect) && $redirect !== '') {
                 $decoded = base64_decode($redirect, true);
@@ -99,11 +81,9 @@ class LoginController extends BaseController
                         }
                     }
                 }
-                
                 // Si no es válida, redirigir a una página por defecto
                 return redirect('/admin/dashboard');
             }
-
             return redirect('/admin/dashboard');
 
         }
@@ -112,7 +92,6 @@ class LoginController extends BaseController
             'error' => 'Usuario o contraseña incorrectos',
         ]);
     }
-
 
     public function logout(): Redirect
     {
