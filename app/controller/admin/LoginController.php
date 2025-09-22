@@ -3,108 +3,121 @@ declare(strict_types=1);
 
 namespace app\controller\admin;
 
+use app\BaseController;
 use think\facade\Session;
 use think\Request;
-use think\facade\Validate;
 use app\model\User;
+use app\validate\LoginFormValidator;
+use think\facade\View;
+use think\exception\ValidateException;
+use think\response\Redirect;
 
-class LoginController
+class LoginController extends BaseController
 {
-    public function index(Request $request)
+
+
+    /**
+     * Validador de formularios para categorías
+     * 
+     * @var LoginFormValidator
+     */
+    private LoginFormValidator $loginValidator;
+
+
+    public function initialize(): void
     {
-        // Vista de login
-        //dump($request->url());
-        return view('admin/login');
+        // Usar el contenedor de dependencias de ThinkPHP
+        $this->loginValidator = app(LoginFormValidator::class);
     }
 
-    public function login(Request $request)
+
+    public function index(): string
     {
+        //return view('/admin/login');
+        return View::fetch('/admin/login');
+    }
 
-        //$data = Request::post();
+    public function login(Request $request): string|Redirect
+    {
         $data = $request->post();
-
-        $check = $request->checkToken('__token__');
-        
-        if(false === $check) {
-            return view('admin/login', ['error' => 'invalid token']);
-            //throw new ValidateException('invalid token');
-        }
-
-        //dump(Request::url());
-
-        //$password_plano = "123456";
-        //$hash = password_hash($password_plano, PASSWORD_DEFAULT);
-
-        //dump($hash);
-
-        //$redirect = $data['redirect'];
         $redirect = $data['redirect'] ?? null;
 
-        // Validar datos mínimos
-        $validate = Validate::rule([
-            'username' => 'require|max:50',
-            'password' => 'require|min:6',
-        ]);
-
-        if (!$validate->check($data)) {
-            dump($validate->getError());
-            //return redirect('/admin/login')->with('error', $validate->getError());
-            return view('admin/login', ['error' => $validate->getError()]);
+        // Verificación de token CSRF
+        if (false === $request->checkToken('__token__')) {
+            return View::fetch('admin/login', [
+                'error' => 'Token inválido, inténtalo de nuevo.',
+            ]);
         }
 
-        $userModel = new User();
-        $user = $userModel->where('username', $data['username'])
-                          ->where('islock', 0)
-                          ->find();
+        // Validación mediante clase dedicada
+        try {
+            $this->loginValidator->check($data);
+        } catch (ValidateException $e) {
+            return View::fetch('admin/login', [
+                'error' => $e->getError(),
+            ]);
+        }
 
-        //dump($user);
+        $user = User::findActiveByUsername($data['username']);
 
-        if ($user && password_verify($data['password'], $user->password)) {
-            //echo "✅ Contraseña correcta, acceso permitido.";
+        if ($user && $user->checkPassword($data['password'])) {
             Session::set('admin_user', $user->toArray());
+            Session::regenerate();
 
-
-
-
-            // Obtener parámetro redirect
-
+            // Redirección segura
+            /*
+            if (is_string($redirect) && $redirect !== '') {
+                $decoded = base64_decode($redirect, true);
+                if ($decoded && str_starts_with($decoded, '/')) {
+                    return redirect($decoded);
+                }
+            }
+            */
+            /*
             if ($redirect) {
                 return redirect(base64_decode($redirect));
             }
 
+            return redirect('/admin/dashboard');
+            */
+
+            // Redirección segura mejorada
+            if (is_string($redirect) && $redirect !== '') {
+                $decoded = base64_decode($redirect, true);
+                
+                // Verificar si la decodificación fue exitosa
+                if ($decoded !== false) {
+                    // Comprobar si es una ruta relativa (comienza con /)
+                    if (str_starts_with($decoded, '/')) {
+                        return redirect($decoded);
+                    }
+                    // Comprobar si es una URL del mismo dominio (opcional, según necesidades)
+                    elseif (filter_var($decoded, FILTER_VALIDATE_URL) !== false) {
+                        $currentDomain = request()->domain();
+                        if (str_starts_with($decoded, $currentDomain)) {
+                            return redirect($decoded);
+                        }
+                    }
+                }
+                
+                // Si no es válida, redirigir a una página por defecto
+                return redirect('/admin/dashboard');
+            }
 
             return redirect('/admin/dashboard');
 
-
-        //return redirect('/admin/dashboard');
-        } else {
-            //echo "❌ Contraseña incorrecta.";
-            return view('admin/login', ['error' => 'Usuario o contraseña incorrectos']);
         }
 
-        /*
-
-        if (!$user || !password_verify($data['password'], $user->password)) {
-
-            dump("Usuario o contraseña incorrectos");
-            dump(password_verify($data['password'], $user->password));
-
-            //return view('admin/login', ['error' => 'Usuario o contraseña incorrectos']);
-
-            //return redirect('/admin/login')->with('error', 'Usuario o contraseña incorrectos');
-        }
-
-        // Guardar sesión
-        Session::set('admin_user', $user->toArray());
-
-
-        //return redirect('/admin/dashboard');
-        */
+        return View::fetch('admin/login', [
+            'error' => 'Usuario o contraseña incorrectos',
+        ]);
     }
 
-    public function logout()
+
+    public function logout(): Redirect
     {
         Session::delete('admin_user');
+        Session::clear(); // Opcional: limpiar toda la sesión
         return redirect('/admin/login');
     }
 }

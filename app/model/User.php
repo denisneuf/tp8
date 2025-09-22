@@ -11,6 +11,8 @@ use think\model\concern\SoftDelete;
  */
 class User extends Model
 {
+    use SoftDelete;
+
     // Habilitar timestamps automáticos
     protected $autoWriteTimestamp = true;
 
@@ -20,15 +22,12 @@ class User extends Model
     // Campos de timestamp personalizados
     protected $createTime = 'create_time';
     protected $updateTime = 'update_time';
-
-    // Soft Delete
-    use SoftDelete;
     protected $deleteTime = 'delete_time';
 
     // Nombre de la tabla (opcional si coincide con el nombre del modelo en minúsculas)
     protected $table = 'users';
 
-    // Campos que pueden asignarse en masa (opcional, para seguridad)
+    // Campos asignables en masa
     protected $field = [
         'pid',
         'username',
@@ -41,7 +40,7 @@ class User extends Model
         'islock',
         'create_time',
         'update_time',
-        'delete_time', // ← nuevo campo
+        'delete_time',
     ];
 
     protected $type = [
@@ -56,9 +55,38 @@ class User extends Model
         'islock'      => 'boolean',
         'create_time' => 'datetime',
         'update_time' => 'datetime',
-        'delete_time'  => 'datetime', // ← nuevo tipo
+        'delete_time' => 'datetime',
     ];
 
-    // Si quieres ocultar campos al convertir a array/json
+    // Ocultar password al serializar
     protected $hidden = ['password'];
+
+    // -----------------------------
+    // Métodos personalizados
+    // -----------------------------
+
+    /**
+     * Encuentra un usuario activo (no bloqueado) por su nombre de usuario.
+     *
+     * @param string $username
+     * @return static|null
+     */
+    public static function findActiveByUsername(string $username): ?self
+    {
+        return self::where('username', $username)
+                   ->where('islock', 0)
+                   ->find();
+    }
+
+    /**
+     * Verifica la contraseña contra el hash almacenado.
+     *
+     * @param string $plainPassword
+     * @return bool
+     */
+    public function checkPassword(string $plainPassword): bool
+    {
+        return password_verify($plainPassword, $this->password);
+    }
+
 }

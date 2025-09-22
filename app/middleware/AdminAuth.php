@@ -5,6 +5,7 @@ namespace app\middleware;
 
 use think\facade\Session;
 use think\response\Redirect;
+use think\facade\Log;
 
 class AdminAuth
 {
@@ -15,6 +16,8 @@ class AdminAuth
             //return redirect(url('admin/login'))->with('error', 'Debes iniciar sesión');
 
         	$currentUrl = $request->url(true); // URL completa
+            //dump($currentUrl);
+            //Log::debug('URL: ' . currentUrl);
 			$encodedUrl = base64_encode($currentUrl);
 
 
