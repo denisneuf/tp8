@@ -2,66 +2,103 @@
 
 {block name="content"}
 
-<h2>Listado de Menús</h2>
-<a href="{:url('menu_create')}" class="btn btn-success mb-3">Crear Menu</a>
 
-{if isset($success)}<div class="alert alert-success">{$success}</div>{/if}
-{if isset($error)}<div class="alert alert-danger">{$error}</div>{/if}
+    {if isset($success)}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Éxito:</strong> {$success}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
 
-<table class="table table-bordered table-hover">
-    <thead class="table-light">
-        <tr>
-            <th>ID</th>
-            <th>Título</th>
-            <th>URL</th>
-            <th>Visible</th>
-            <th>Orden</th>
-            <th>Columnas</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {foreach $menus as $menu}
-        <tr>
-            <td>{$menu.id}</td>
-            <td>{$menu.title}</td>
-            <td>{$menu.url}</td>
-            <td>{if $menu.visible}✔️{/if}</td>
-            <td>{$menu.order}</td>
-            <td>
-                <ul class="list-unstyled">
-                    {foreach $menu.columns as $column}
-                    <li>
-                        <strong>{$column.title}</strong>
-                        <ul>
-                            {foreach $column.links as $link}
-                            <li><a href="{$link.url}" target="_blank">{$link.title}</a></li>
+    {if isset($error)}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>Error:</strong> {$error}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
+
+
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold">
+            <i class="fas fa-edit me-2"></i>Listado de Menús
+        </h6>
+        <a href="{:url('menu_create')}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-plus-square me-2"></i>Crear Menú
+        </a>
+    </div>
+
+    <div class="card-body">
+
+
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>URL</th>
+                    <!--<th>Visible</th>-->
+                    <th>Orden</th>
+                    <th>Columnas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {foreach $menus as $menu}
+                <tr>
+                    <td>{$menu.id}</td>
+                    <td>{$menu.title}</td>
+                    <td>{$menu.url}</td>
+                    <!--<td>{if $menu.visible}✔️{/if}</td>-->
+                    <td>{$menu.order}</td>
+                    <td>
+                        <ul class="list-unstyled">
+                            {foreach $menu.columns as $column}
+                            <li>
+                                <strong>{$column.title}</strong>
+                                <ul>
+                                    {foreach $column.links as $link}
+                                    <li><a href="{$link.url}" target="_blank">{$link.title}</a></li>
+                                    {/foreach}
+                                </ul>
+                            </li>
                             {/foreach}
                         </ul>
-                    </li>
-                    {/foreach}
-                </ul>
-            </td>
-            <td>
-                <a href="{:url('menu_edit', ['id' => $menu.id])}" class="btn btn-sm btn-primary">Editar</a>
+                    </td>
+                    <td>
+                        <a href="{:url('menu_edit', ['id' => $menu.id])}" class="btn btn-sm btn-primary">Editar</a>
 
-                {if !$menu.delete_time}
-                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#actionModal" data-id="{$menu.id}" data-action="delete">
-                        Eliminar
-                    </button>
-                {else}
-                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#actionModal" data-id="{$menu.id}" data-action="restore">
-                        Restaurar
-                    </button>
-                {/if}
+                        {if !$menu.delete_time}
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#actionModal" data-id="{$menu.id}" data-action="delete">
+                                Eliminar
+                            </button>
+                        {else}
+                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#actionModal" data-id="{$menu.id}" data-action="restore">
+                                Restaurar
+                            </button>
+                        {/if}
 
-            </td>
-        </tr>
-        {/foreach}
-    </tbody>
-</table>
+                    </td>
+                </tr>
+                {/foreach}
+            </tbody>
+        </table>
 
-{$pagination}
+    </div>
+
+</div>
+
+
+
+<div class="pagination pagination-primary">
+{$menus|raw}
+</div>
+
+
+
+<!--{$pagination}-->
+
 
 <!-- Modal de eliminación -->
 <!-- Modal genérico -->
@@ -84,6 +121,12 @@
     </form>
   </div>
 </div>
+
+
+
+
+
+
 
 
 <!-- Script para ambos modales -->

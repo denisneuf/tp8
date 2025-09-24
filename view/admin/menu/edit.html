@@ -2,101 +2,386 @@
 
 {block name="content"}
 
-{if isset($error)}<div class="alert alert-danger">{$error}</div>{/if}
-
-<form action="{:url('menu_update', ['id' => $menu.id])}" method="post">
-    <input type="hidden" name="__token__" value="{:token()}">
-
-    <div class="mb-3">
-        <label class="form-label">Título del Menú</label>
-        <input type="text" class="form-control" name="title" value="{$menu.title}" required>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">URL del Menú</label>
-        <input type="text" class="form-control" name="url" value="{$menu.url}">
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Orden</label>
-        <input type="number" class="form-control" name="order" value="{$menu.order}">
-    </div>
-
-    <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" name="visible" value="1" {if $menu.visible}checked{/if}>
-        <label class="form-check-label">Visible</label>
-    </div>
-
-    <hr>
-    <h5>Columnas del Menú</h5>
-    <div id="columns-container">
-    {foreach $menu.columns as $i => $column}
-    <div class="column-block border p-3 mb-3">
-        <input type="hidden" name="columns[{$i}][id]" value="{$column.id}">
-        <div class="mb-2">
-            <label class="form-label">Título de la Columna</label>
-            <input type="text" class="form-control" name="columns[{$i}][title]" value="{$column.title}" required>
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        <div class="mb-2">
-            <label class="form-label">Orden</label>
-            <input type="number" class="form-control" name="columns[{$i}][order]" value="{$column.order}">
+    {/if}
+
+    {if isset($old_data) && $old_data}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>DEBUG Old Data:</strong>
+            <pre>{:print_r($old_data, true)}</pre>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        <h6>Enlaces</h6>
-        <div class="links-container">
-            {foreach $column.links as $j => $link}
-            <div class="link-block mb-2">
-                <input type="hidden" name="columns[{$i}][links][{$j}][id]" value="{$link.id}">
-                <input type="text" class="form-control mb-1" name="columns[{$i}][links][{$j}][title]" value="{$link.title}" required>
-                <input type="text" class="form-control mb-1" name="columns[{$i}][links][{$j}][url]" value="{$link.url}">
-                <input type="number" class="form-control mb-1" name="columns[{$i}][links][{$j}][order]" value="{$link.order}">
-            </div>
-            {/foreach}
+    {/if}
+
+    <!-- Tarjeta principal -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-edit me-2"></i>Editando: {$menu.title|default='Nuevo Menú'}
+            </h6>
+            <a href="{:url('menu_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            </a>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addLink(this, {$i})">Añadir Enlace</button>
+        <div class="card-body">
+            <form action="{:url('menu_update', ['id' => $menu.id])}" method="post" novalidate>
+                {:token_field()}
+                
+                <!-- Sección Información Básica -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título del Menú <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'title'}is-invalid{/if}" 
+                                   name="title" id="title" required 
+                                   maxlength="100" value="{if isset($old_data.title)}{$old_data.title}{else}{$menu.title|default=''}{/if}">
+                            {if isset($error_field) && $error_field == 'title'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="url" class="form-label">URL del Menú</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'url'}is-invalid{/if}" 
+                                   name="url" id="url" 
+                                   maxlength="255" value="{if isset($old_data.url)}{$old_data.url}{else}{$menu.url|default=''}{/if}">
+                            {if isset($error_field) && $error_field == 'url'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-sliders me-2"></i>Configuración</h5>
+                        
+                        <div class="mb-3">
+                            <label for="order" class="form-label">Orden</label>
+                            <input type="number" class="form-control {if isset($error_field) && $error_field == 'order'}is-invalid{/if}" 
+                                   name="order" id="order" 
+                                   min="0" value="{if isset($old_data.order)}{$old_data.order}{else}{$menu.order|default='0'}{/if}">
+                            {if isset($error_field) && $error_field == 'order'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="visible" value="0">
+                                <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
+                                       {if $menu.visible == 1}checked{/if}>
+                                <label class="form-check-label" for="visible">Menú Visible</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Columnas -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-primary mb-0"><i class="bi bi-columns me-2"></i>Columnas del Menú</h5>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-column-btn">
+                                <i class="bi bi-plus-circle me-1"></i>Añadir Columna
+                            </button>
+                        </div>
+                        
+                        <div id="columns-container">
+                            {foreach $menu.columns as $i => $column}
+                            <div class="column-block card border-primary mb-3">
+                                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Columna {$i+1}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-column-btn">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" name="columns[{$i}][id]" value="{$column.id}">
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Título de la Columna <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="columns[{$i}][title]" value="{$column.title}" required maxlength="100">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Orden</label>
+                                                <input type="number" class="form-control" name="columns[{$i}][order]" value="{$column.order|default='0'}" min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0"><i class="bi bi-link-45deg"></i>Enlaces</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary add-link-btn" data-column-index="{$i}">
+                                            <i class="bi bi-plus me-1"></i>Añadir Enlace
+                                        </button>
+                                    </div>
+
+                                    <div class="links-container mt-2">
+                                        {foreach $column.links as $j => $link}
+                                        <div class="link-block card mb-2">
+                                            <div class="card-body py-2">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="fw-bold">Enlace {$j+1}</span>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-link-btn">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <input type="hidden" name="columns[{$i}][links][{$j}][id]" value="{$link.id}">
+                                                        <input type="text" class="form-control mb-2" name="columns[{$i}][links][{$j}][title]" value="{$link.title}" placeholder="Título" required>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control mb-2" name="columns[{$i}][links][{$j}][url]" value="{$link.url}" placeholder="URL">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="number" class="form-control" name="columns[{$i}][links][{$j}][order]" value="{$link.order|default='0'}" min="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {/foreach}
+
+                                        {if empty($column.links)}
+                                        <div class="alert alert-warning no-links-alert">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            No hay enlaces definidos. Haz clic en "Añadir Enlace" para comenzar.
+                                        </div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
+                            {/foreach}
+
+                            {if empty($menu.columns)}
+                            <div id="no-columns-alert" class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                No hay columnas definidas. Haz clic en "Añadir Columna" para comenzar.
+                            </div>
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Guardar Menú
+                    </button>
+                    <a href="{:url('menu_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
-    {/foreach}
 
+    <!-- Modal Confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Confirmar acción</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            ¿Estás seguro de que quieres eliminar este elemento?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <button type="button" class="btn btn-outline-primary" onclick="addColumn()">Añadir Columna</button>
-
-    <hr>
-    <button type="submit" class="btn btn-success mt-3">Actualizar Menú</button>
-</form>
-
-<script>
-function addColumn() {
-    const index = document.querySelectorAll('.column-block').length;
-    const container = document.getElementById('columns-container');
-    const columnHTML = `
-        <div class="column-block border p-3 mb-3">
-            <div class="mb-2">
-                <label class="form-label">Título de la Columna</label>
-                <input type="text" class="form-control" name="columns[${index}][title]" required>
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Orden</label>
-                <input type="number" class="form-control" name="columns[${index}][order]" value="0">
-            </div>
-            <h6>Enlaces</h6>
-            <div class="links-container"></div>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addLink(this, ${index})">Añadir Enlace</button>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', columnHTML);
-}
-
-function addLink(button, columnIndex) {
-    const container = button.previousElementSibling;
-    const linkIndex = container.querySelectorAll('.link-block').length;
-    const linkHTML = `
-        <div class="link-block mb-2">
-            <input type="text" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][title]" placeholder="Título del enlace" required>
-            <input type="text" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][url]" placeholder="URL del enlace">
-            <input type="number" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][order]" placeholder="Orden" value="0">
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', linkHTML);
-}
-</script>
 
 {/block}
+
+{block name="scripts"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const form = document.querySelector('form');
+    let elementToDelete = null;
+
+    // Validación básica de campos required
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        form.querySelectorAll('[required]').forEach(f => {
+            if (!f.value.trim()) {
+                valid = false;
+                f.classList.add('is-invalid');
+            }
+        });
+        if (!valid) {
+            e.preventDefault();
+            alert('Por favor, complete todos los campos obligatorios.');
+        }
+    });
+
+    // Botones
+    document.getElementById('add-column-btn').addEventListener('click', addColumn);
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-column-btn') || e.target.closest('.remove-link-btn')) {
+            e.preventDefault();
+            elementToDelete = e.target.closest('.column-block, .link-block');
+            new bootstrap.Modal(document.getElementById('confirmModal')).show();
+        }
+        if (e.target.closest('.add-link-btn')) {
+            addLink(e.target.closest('.add-link-btn'));
+        }
+    });
+
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+        if (!elementToDelete) return;
+
+        if (elementToDelete.classList.contains('column-block')) {
+            elementToDelete.remove();
+            if (!document.querySelectorAll('.column-block').length) {
+                document.getElementById('columns-container').innerHTML = `
+                    <div id="no-columns-alert" class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>No hay columnas definidas. Haz clic en "Añadir Columna" para comenzar.
+                    </div>`;
+            }
+        } else if (elementToDelete.classList.contains('link-block')) {
+            const container = elementToDelete.closest('.links-container');
+            elementToDelete.remove();
+            if (!container.querySelectorAll('.link-block').length) {
+                container.innerHTML = `
+                    <div class="alert alert-warning no-links-alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>No hay enlaces definidos. Haz clic en "Añadir Enlace" para comenzar.
+                    </div>`;
+            }
+        }
+
+        elementToDelete = null;
+        bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+        updateColumnNumbers();
+    });
+
+    // Agregar columna
+    function addColumn() {
+        const container = document.getElementById('columns-container');
+        const alert = document.getElementById('no-columns-alert');
+        if (alert) alert.remove();
+
+        const colCount = document.querySelectorAll('.column-block').length;
+        const defaultOrder = colCount + 1;
+
+        const html = `
+            <div class="column-block card border-primary mb-3">
+                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Columna ${colCount+1}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-column-btn">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Título <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="columns[${colCount}][title]" required maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Orden</label>
+                                <input type="number" class="form-control" name="columns[${colCount}][order]" value="${defaultOrder}" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0"><i class="bi bi-link-45deg"></i>Enlaces</h6>
+                        <button type="button" class="btn btn-sm btn-outline-secondary add-link-btn" data-column-index="${colCount}">
+                            <i class="bi bi-plus me-1"></i>Añadir Enlace
+                        </button>
+                    </div>
+                    <div class="links-container mt-2">
+                        <div class="alert alert-warning no-links-alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>No hay enlaces definidos. Haz clic en "Añadir Enlace" para comenzar.
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        updateColumnNumbers();
+        container.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Agregar enlace a columna
+    function addLink(button) {
+        const colIndex = button.dataset.columnIndex;
+        const container = button.closest('.card-body').querySelector('.links-container');
+        const alert = container.querySelector('.no-links-alert');
+        if (alert) alert.remove();
+
+        const linkCount = container.querySelectorAll('.link-block').length;
+        const defaultOrder = linkCount + 1;
+
+        const html = `
+            <div class="link-block card mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Enlace ${linkCount+1}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-link-btn"><i class="bi bi-x"></i></button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control mb-2" name="columns[${colIndex}][links][${linkCount}][title]" placeholder="Título" required>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control mb-2" name="columns[${colIndex}][links][${linkCount}][url]" placeholder="URL">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="number" class="form-control" name="columns[${colIndex}][links][${linkCount}][order]" value="${defaultOrder}" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        updateColumnNumbers();
+        container.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Reindexar columnas y enlaces
+    function updateColumnNumbers() {
+        document.querySelectorAll('.column-block').forEach((col, ci) => {
+            col.querySelector('.card-header span').textContent = 'Columna ' + (ci+1);
+            col.querySelectorAll('input[name]').forEach(inp => {
+                inp.name = inp.name.replace(/columns\[\d+\]/, `columns[${ci}]`);
+            });
+            col.querySelectorAll('.add-link-btn').forEach(btn => btn.dataset.columnIndex = ci);
+
+            col.querySelectorAll('.link-block').forEach((link, li) => {
+                link.querySelector('.fw-bold').textContent = 'Enlace ' + (li+1);
+                link.querySelectorAll('input[name]').forEach(inp => {
+                    inp.name = inp.name.replace(/columns\[\d+\]\[links\]\[\d+\]/, `columns[${ci}][links][${li}]`);
+                    // actualizar valor por defecto de orden si está vacío
+                    if (inp.type === 'number' && inp.value === '0') inp.value = li+1;
+                });
+            });
+        });
+    }
+
+    // Inicializar reindexado al cargar la página
+    updateColumnNumbers();
+
+});
+</script>
+{/block}
+

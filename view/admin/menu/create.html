@@ -1,74 +1,412 @@
-
 {extend name="admin/layout" /}
 
 {block name="content"}
 
-<form action="{:url('menu_save')}" method="post">
-    <input type="hidden" name="__token__" value="{:token()}">
-
-    <div class="mb-3">
-        <label for="title" class="form-label">Título del Menú</label>
-        <input type="text" class="form-control" name="title" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="url" class="form-label">URL del Menú</label>
-        <input type="text" class="form-control" name="url">
-    </div>
-
-    <div class="mb-3">
-        <label for="order" class="form-label">Orden</label>
-        <input type="number" class="form-control" name="order" value="0">
-    </div>
-
-    <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" name="visible" value="1" checked>
-        <label class="form-check-label">Visible</label>
-    </div>
-
-    <hr>
-    <h5>Columnas del Menú</h5>
-    <div id="columns-container"></div>
-    <button type="button" class="btn btn-outline-primary" onclick="addColumn()">Añadir Columna</button>
-
-    <hr>
-    <button type="submit" class="btn btn-success mt-3">Guardar Menú</button>
-</form>
-
-<script>
-function addColumn() {
-    const index = document.querySelectorAll('.column-block').length;
-    const container = document.getElementById('columns-container');
-    const columnHTML = `
-        <div class="column-block border p-3 mb-3">
-            <div class="mb-2">
-                <label class="form-label">Título de la Columna</label>
-                <input type="text" class="form-control" name="columns[${index}][title]" required>
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Orden</label>
-                <input type="number" class="form-control" name="columns[${index}][order]" value="0">
-            </div>
-            <h6>Enlaces</h6>
-            <div class="links-container"></div>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addLink(this, ${index})">Añadir Enlace</button>
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    `;
-    container.insertAdjacentHTML('beforeend', columnHTML);
-}
+    {/if}
 
-function addLink(button, columnIndex) {
-    const container = button.previousElementSibling;
-    const linkIndex = container.querySelectorAll('.link-block').length;
-    const linkHTML = `
-        <div class="link-block mb-2">
-            <input type="text" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][title]" placeholder="Título del enlace" required>
-            <input type="text" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][url]" placeholder="URL del enlace">
-            <input type="number" class="form-control mb-1" name="columns[${columnIndex}][links][${linkIndex}][order]" placeholder="Orden" value="0">
+    {if isset($old_data) && $old_data}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>DEBUG Old Data:</strong>
+            <pre>{:print_r($old_data, true)}</pre>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    `;
-    container.insertAdjacentHTML('beforeend', linkHTML);
-}
-</script>
+    {/if}
+
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Menú
+            </h6>
+            <a href="{:url('menu_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{:url('menu_save')}" method="post" novalidate>
+                {:token_field()}
+                
+                <!-- Sección: Información Básica - Dos columnas como el ejemplo -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                        
+<div class="mb-3">
+    <label for="title" class="form-label">Título del Menú <span class="text-danger">*</span></label>
+    <input type="text" class="form-control {if isset($error_field) && $error_field == 'title'}is-invalid{/if}" 
+           name="title" id="title" required 
+           maxlength="100" value="{if isset($old_data.title)}{$old_data.title}{/if}">
+    {if isset($error_field) && $error_field == 'title'}
+        <div class="invalid-feedback">{$error}</div>
+    {/if}
+    <div class="form-text">Máximo 100 caracteres. Este campo es obligatorio.</div>
+</div>
+
+<div class="mb-3">
+    <label for="url" class="form-label">URL del Menú</label>
+    <input type="text" class="form-control {if isset($error_field) && $error_field == 'url'}is-invalid{/if}" 
+           name="url" id="url" maxlength="255" value="{if isset($old_data.url)}{$old_data.url}{/if}">
+    {if isset($error_field) && $error_field == 'url'}
+        <div class="invalid-feedback">{$error}</div>
+    {/if}
+    <div class="form-text">URL completa o ruta relativa. Máximo 255 caracteres.</div>
+</div>
+
+
+
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-sliders me-2"></i>Configuración</h5>
+                        
+<div class="mb-3">
+    <label for="order" class="form-label">Orden</label>
+    <input type="number" class="form-control {if isset($error_field) && $error_field == 'order'}is-invalid{/if}" 
+           name="order" id="order" min="0" value="{if isset($old_data.order)}{$old_data.order}{else}0{/if}">
+    {if isset($error_field) && $error_field == 'order'}
+        <div class="invalid-feedback">{$error}</div>
+    {/if}
+    <div class="form-text">Número para ordenar los menús. Menor número = posición superior.</div>
+</div>
+
+<div class="mb-3">
+    <div class="form-check form-switch">
+        <input type="hidden" name="visible" value="0">
+        <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+               type="checkbox" id="visible" name="visible" value="1"
+               {if (isset($old_data.visible) && $old_data.visible == 1) || (!isset($old_data.visible))}checked{/if}>
+        <label class="form-check-label" for="visible">
+            Menú Visible
+        </label>
+        {if isset($error_field) && $error_field == 'visible'}
+            <div class="invalid-feedback">{$error}</div>
+        {/if}
+        <div class="form-text">Determina si el menú es visible en el sitio.</div>
+    </div>
+</div>
+                    </div>
+                </div>
+                
+                <!-- Sección: Columnas del Menú - En una sola columna -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-primary mb-0"><i class="bi bi-columns me-2"></i>Columnas del Menú</h5>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-column-btn">
+                                <i class="bi bi-plus-circle me-1"></i>Añadir Columna
+                            </button>
+                        </div>
+                        
+                        <div id="columns-container">
+                            {if isset($old_data.columns) && $old_data.columns}
+                                {foreach $old_data.columns as $i => $column}
+                                <div class="column-block card border-primary mb-3">
+                                    <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Columna {$i+1}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-column-btn">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Título de la Columna <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" name="columns[{$i}][title]" 
+                                                           value="{$column.title}" required maxlength="100">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Orden</label>
+                                                    <input type="number" class="form-control" name="columns[{$i}][order]" 
+                                                           value="{$column.order|default='0'}" min="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0"><i class="bi bi-link-45deg"></i>Enlaces</h6>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary add-link-btn float-end" data-column-index="{$i}">
+                                                <i class="bi bi-plus me-1"></i>Añadir Enlace
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="links-container mt-2">
+                                            {if isset($column.links) && $column.links}
+                                                {foreach $column.links as $j => $link}
+                                                <div class="link-block card mb-2">
+                                                    <div class="card-body py-2">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span class="fw-bold">Enlace {$j+1}</span>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger remove-link-btn">
+                                                                <i class="bi bi-x"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-4">
+                                                                <input type="text" class="form-control mb-2" 
+                                                                       name="columns[{$i}][links][{$j}][title]" 
+                                                                       value="{$link.title}" placeholder="Título del enlace" required>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <input type="text" class="form-control mb-2" 
+                                                                       name="columns[{$i}][links][{$j}][url]" 
+                                                                       value="{$link.url}" placeholder="URL del enlace">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <input type="number" class="form-control" 
+                                                                       name="columns[{$i}][links][{$j}][order]" 
+                                                                       value="{$link.order|default='0'}" placeholder="Orden" min="0">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/foreach}
+                                            {else}
+                                                <div class="alert alert-warning no-links-alert" data-column-index="{$i}">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    No hay enlaces definidos. Haz clic en "Añadir Enlace" para comenzar.
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </div>
+                                {/foreach}
+                            {/if}
+                        </div>
+                        
+                        {if !isset($old_data.columns) || empty($old_data.columns)}
+                        <div class="alert alert-info" id="no-columns-alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            No hay columnas definidas. Haz clic en "Añadir Columna" para comenzar.
+                        </div>
+                        {/if}
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Crear Menú
+                    </button>
+                    <a href="{:url('menu_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+
+<!-- Modal de confirmación genérico -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar eliminación</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmDeleteMessage">¿Estás seguro de que deseas eliminar este elemento?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal de aviso -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-exclamation-circle me-2"></i>Aviso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="alertMessage">Mensaje de aviso...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 {/block}
+
+{block name="scripts"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    let columnCounter = 0; // Para create, empezamos desde 0
+    let linkCounters = {};
+
+    // Validación básica
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        form.querySelectorAll('[required]').forEach(f => {
+            if (!f.value.trim()) {
+                valid = false;
+                f.classList.add('is-invalid');
+            }
+        });
+        if (!valid) {
+            e.preventDefault();
+            alert('Por favor, complete todos los campos obligatorios.');
+        }
+    });
+
+    // Botón añadir columna
+    document.getElementById('add-column-btn').addEventListener('click', addColumn);
+
+    // Delegación de eventos
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-column-btn')) removeColumn(e.target.closest('.remove-column-btn'));
+        if (e.target.closest('.remove-link-btn')) removeLink(e.target.closest('.remove-link-btn'));
+        if (e.target.closest('.add-link-btn')) {
+            const button = e.target.closest('.add-link-btn');
+            const columnIndex = parseInt(button.dataset.columnIndex);
+            addLink(button, columnIndex);
+        }
+    });
+
+    function addColumn() {
+        const container = document.getElementById('columns-container');
+        const alert = document.getElementById('no-columns-alert');
+        if (alert) alert.style.display = 'none';
+
+        const columnNumber = columnCounter + 1; // Mostrar columna desde 1
+        const columnHTML = `
+            <div class="column-block card border-primary mb-3">
+                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Columna ${columnNumber}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-column-btn">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Título de la Columna <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="columns[${columnCounter}][title]" required maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Orden</label>
+                                <input type="number" class="form-control" name="columns[${columnCounter}][order]" value="${columnNumber}" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0"><i class="bi bi-link-45deg"></i>Enlaces</h6>
+                        <button type="button" class="btn btn-sm btn-outline-secondary add-link-btn" data-column-index="${columnCounter}">
+                            <i class="bi bi-plus me-1"></i>Añadir Enlace
+                        </button>
+                    </div>
+                    <div class="links-container mt-2">
+                        <div class="alert alert-warning no-links-alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            No hay enlaces definidos. Haz clic en "Añadir Enlace" para comenzar.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', columnHTML);
+        linkCounters[columnCounter] = 0;
+
+        // Scroll a la columna recién creada
+        container.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        columnCounter++;
+    }
+
+    function addLink(button, columnIndex) {
+        const container = button.closest('.card-body').querySelector('.links-container');
+        const linkBlocks = container.querySelectorAll('.link-block');
+        const linkNumber = linkBlocks.length + 1; // Enlaces también desde 1
+        const noLinksAlert = container.querySelector('.no-links-alert');
+        if (noLinksAlert) noLinksAlert.style.display = 'none';
+
+        const linkHTML = `
+            <div class="link-block card mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Enlace ${linkNumber}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-link-btn">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control mb-2" name="columns[${columnIndex}][links][${linkBlocks.length}][title]" placeholder="Título del enlace" required>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control mb-2" name="columns[${columnIndex}][links][${linkBlocks.length}][url]" placeholder="URL del enlace">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="number" class="form-control" name="columns[${columnIndex}][links][${linkBlocks.length}][order]" value="${linkNumber}" placeholder="Orden" min="1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', linkHTML);
+
+        // Scroll al enlace recién creado
+        container.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function removeColumn(button) {
+        const columnBlock = button.closest('.column-block');
+        columnBlock.remove();
+
+        // Reindex columnas y enlaces
+        document.querySelectorAll('.column-block').forEach((col, i) => {
+            col.querySelector('.card-header span').textContent = `Columna ${i + 1}`;
+            col.querySelector('input[name*="[order]"]').value = i + 1;
+            col.querySelectorAll('.add-link-btn').forEach(btn => btn.dataset.columnIndex = i);
+            const links = col.querySelectorAll('.link-block');
+            links.forEach((link, j) => {
+                link.querySelector('.fw-bold').textContent = `Enlace ${j + 1}`;
+                link.querySelector('input[name*="[order]"]').value = j + 1;
+            });
+        });
+    }
+
+    function removeLink(button) {
+        const linkBlock = button.closest('.link-block');
+        const columnBlock = linkBlock.closest('.column-block');
+        linkBlock.remove();
+
+        // Reindex enlaces
+        const links = columnBlock.querySelectorAll('.link-block');
+        links.forEach((link, j) => {
+            link.querySelector('.fw-bold').textContent = `Enlace ${j + 1}`;
+            link.querySelector('input[name*="[order]"]').value = j + 1;
+        });
+    }
+});
+</script>
+{/block}
+
+
