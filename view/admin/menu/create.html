@@ -5,17 +5,36 @@
     <!-- Alertas de notificación -->
     {if isset($error)}
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i>
+            <i class="fas fa-exclamation-circle mr-2"></i>
             <strong>Error:</strong> {$error}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {/if}
 
+    {if isset($success)}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Éxito:</strong> {$success}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+    <!-- DEBUG: Mostrar datos recuperados -->
+    
     {if isset($old_data) && $old_data}
         <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <i class="fas fa-info-circle me-2"></i>
+            <i class="fas fa-info-circle mr-2"></i>
             <strong>DEBUG Old Data:</strong>
             <pre>{:print_r($old_data, true)}</pre>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+
+    {if isset($error_field)}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <strong>DEBUG Error Field:</strong> {$error_field}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {/if}
@@ -39,59 +58,67 @@
                     <div class="col-md-6">
                         <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
                         
-<div class="mb-3">
-    <label for="title" class="form-label">Título del Menú <span class="text-danger">*</span></label>
-    <input type="text" class="form-control {if isset($error_field) && $error_field == 'title'}is-invalid{/if}" 
-           name="title" id="title" required 
-           maxlength="100" value="{if isset($old_data.title)}{$old_data.title}{/if}">
-    {if isset($error_field) && $error_field == 'title'}
-        <div class="invalid-feedback">{$error}</div>
-    {/if}
-    <div class="form-text">Máximo 100 caracteres. Este campo es obligatorio.</div>
-</div>
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Título del Menú <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control {if isset($error_field) && $error_field == 'title'}is-invalid{/if}" 
+                                       name="title" id="title" required 
+                                       maxlength="100" value="{if isset($old_data.title)}{$old_data.title}{/if}">
+                                <!--
+                                {if isset($error_field) && $error_field == 'title'}
+                                    <div class="invalid-feedback">{$error}</div>
+                                {/if}
+                                -->
+                                <div class="form-text">Máximo 100 caracteres. Este campo es obligatorio.</div>
+                            </div>
 
-<div class="mb-3">
-    <label for="url" class="form-label">URL del Menú</label>
-    <input type="text" class="form-control {if isset($error_field) && $error_field == 'url'}is-invalid{/if}" 
-           name="url" id="url" maxlength="255" value="{if isset($old_data.url)}{$old_data.url}{/if}">
-    {if isset($error_field) && $error_field == 'url'}
-        <div class="invalid-feedback">{$error}</div>
-    {/if}
-    <div class="form-text">URL completa o ruta relativa. Máximo 255 caracteres.</div>
-</div>
+                            <div class="mb-3">
+                                <label for="url" class="form-label">URL del Menú</label>
+                                <input type="text" class="form-control {if isset($error_field) && $error_field == 'url'}is-invalid{/if}" 
+                                       name="url" id="url" maxlength="255" value="{if isset($old_data.url)}{$old_data.url}{/if}">
+                                <!--
+                                {if isset($error_field) && $error_field == 'url'}
+                                    <div class="invalid-feedback">{$error}</div>
+                                {/if}
+                                -->
+                                <div class="form-text">URL completa o ruta relativa. Máximo 255 caracteres.</div>
+                            </div>
 
 
 
                     </div>
-                    
+                                                
                     <div class="col-md-6">
                         <h5 class="text-primary mb-3"><i class="bi bi-sliders me-2"></i>Configuración</h5>
-                        
-<div class="mb-3">
-    <label for="order" class="form-label">Orden</label>
-    <input type="number" class="form-control {if isset($error_field) && $error_field == 'order'}is-invalid{/if}" 
-           name="order" id="order" min="0" value="{if isset($old_data.order)}{$old_data.order}{else}0{/if}">
-    {if isset($error_field) && $error_field == 'order'}
-        <div class="invalid-feedback">{$error}</div>
-    {/if}
-    <div class="form-text">Número para ordenar los menús. Menor número = posición superior.</div>
-</div>
+                                                    
+                            <div class="mb-3">
+                                <label for="order" class="form-label">Orden</label>
+                                <input type="number" class="form-control {if isset($error_field) && $error_field == 'order'}is-invalid{/if}" 
+                                       name="order" id="order" min="0" value="{if isset($old_data.order)}{$old_data.order}{else}0{/if}">
+                                <!--
+                                {if isset($error_field) && $error_field == 'order'}
+                                    <div class="invalid-feedback">{$error}</div>
+                                {/if}
+                                -->
+                                <div class="form-text">Número para ordenar los menús. Menor número = posición superior.</div>
+                            </div>
 
-<div class="mb-3">
-    <div class="form-check form-switch">
-        <input type="hidden" name="visible" value="0">
-        <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
-               type="checkbox" id="visible" name="visible" value="1"
-               {if (isset($old_data.visible) && $old_data.visible == 1) || (!isset($old_data.visible))}checked{/if}>
-        <label class="form-check-label" for="visible">
-            Menú Visible
-        </label>
-        {if isset($error_field) && $error_field == 'visible'}
-            <div class="invalid-feedback">{$error}</div>
-        {/if}
-        <div class="form-text">Determina si el menú es visible en el sitio.</div>
-    </div>
-</div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input type="hidden" name="visible" value="0">
+                                    <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                           type="checkbox" id="visible" name="visible" value="1"
+                                           {if (isset($old_data.visible) && $old_data.visible == 1) || (!isset($old_data.visible))}checked{/if}>
+                                    <label class="form-check-label" for="visible">
+                                        Menú Visible
+                                    </label>
+                                    <!--
+                                    {if isset($error_field) && $error_field == 'visible'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    -->
+                                    <div class="form-text">Determina si el menú es visible en el sitio.</div>
+                                </div>
+                            </div>
                     </div>
                 </div>
                 
@@ -253,10 +280,57 @@
 
 {block name="scripts"}
 <script>
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Variables que vienen desde el controlador
+    const errorField = "{if isset($error_field)}{$error_field}{/if}";
+    const errorMessage = "{if isset($error)}{$error}{/if}";
+
+    if (errorField) {
+        // Buscar input por name exacto
+        const field = document.querySelector(`[name="${errorField}"]`);
+        if (field) {
+            field.value = '';
+            field.blur(); // Quitar focus para que se vea el placeholder
+            field.placeholder = 'Por favor, ingresa un valor válido';
+            field.focus(); // Opcional: volver a dar focus
+            field.classList.add("is-invalid");
+
+            // Crear el div de feedback
+            const feedback = document.createElement("div");
+            feedback.className = "invalid-feedback d-block";
+            //feedback.textContent = errorMessage;
+            feedback.innerHTML = errorMessage;
+
+            // Insertar justo después del input
+            field.insertAdjacentElement("afterend", feedback);
+        }
+    }
+});
+
+
+
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     let columnCounter = 0; // Para create, empezamos desde 0
     let linkCounters = {};
+
+
+
+    // Obtener elementos del modal de aviso
+    const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+    const alertMessage = document.getElementById('alertMessage');
+
+    // Función para mostrar mensaje en el modal
+    function showAlert(message) {
+        alertMessage.textContent = message;
+        alertModal.show();
+    }
+
 
     // Validación básica
     form.addEventListener('submit', function(e) {
@@ -269,7 +343,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (!valid) {
             e.preventDefault();
-            alert('Por favor, complete todos los campos obligatorios.');
+            //alert('Por favor, complete todos los campos obligatorios.');
+            showAlert('Por favor, complete todos los campos obligatorios.');
         }
     });
 
@@ -286,6 +361,16 @@ document.addEventListener('DOMContentLoaded', function() {
             addLink(button, columnIndex);
         }
     });
+
+
+
+    //Movidas nuevas
+
+
+
+    //
+
+
 
     function addColumn() {
         const container = document.getElementById('columns-container');
@@ -306,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Título de la Columna <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="columns[${columnCounter}][title]" required maxlength="100">
+                                <input type="text" class="form-control" name="columns[${columnCounter}][title]" required>
                             </div>
                         </div>
                         <div class="col-md-6">

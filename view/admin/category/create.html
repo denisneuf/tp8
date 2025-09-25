@@ -220,6 +220,25 @@
         </div>
     </div>
 
+
+<!-- Modal de aviso -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-exclamation-circle me-2"></i>Aviso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="alertMessage">Mensaje de aviso...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {/block}
 
 {block name="scripts"}
@@ -237,6 +256,17 @@ const bootstrapIcons = [
 ];
 
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Obtener elementos del modal de aviso
+    const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+    const alertMessage = document.getElementById('alertMessage');
+
+    // Función para mostrar mensaje en el modal
+    function showAlert(message) {
+        alertMessage.textContent = message;
+        alertModal.show();
+    }
+
     // Validación básica del formulario
     const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
@@ -255,7 +285,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!isValid) {
             e.preventDefault();
-            alert('Por favor, complete los campos obligatorios marcados con *.');
+            //alert('Por favor, complete los campos obligatorios marcados con *.');
+            showAlert('Por favor, complete los campos obligatorios marcados con *.');
         }
     });
     

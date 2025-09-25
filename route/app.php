@@ -72,6 +72,7 @@ Route::group('admin/menu', function () {
     Route::post('update', 'app\controller\admin\MenuController@update')->pattern(['id' => '\d+'])->name('menu_update');
     Route::post('delete', 'app\controller\admin\MenuController@delete')->pattern(['id' => '\d+'])->name('menu_delete');
     Route::post('restore', 'app\controller\admin\MenuController@restore')->pattern(['id' => '\d+'])->name('menu_restore');
+    Route::post('force-delete', 'app\controller\admin\MenuController@forceDelete')->name('menu_force_delete');
 })->middleware('admin')->middleware('adminmenu');
 
 Route::group('admin/brand', function () {

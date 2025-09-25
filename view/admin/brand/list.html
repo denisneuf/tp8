@@ -65,10 +65,11 @@
                             {/if}
                         </td>
                         <td>
-                            <a href="{:url('brand_edit', ['id' => $brand.id])}" class="btn btn-sm btn-primary">Editar</a>
+                            
 
                             {if !$brand.delete_time}
-                                <button type="button" class="btn btn-sm btn-danger"
+                                <a href="{:url('brand_edit', ['id' => $brand.id])}" class="btn btn-sm btn-primary lh-1 rounded-pill">Editar</a>
+                                <button type="button" class="btn btn-sm btn-danger lh-1 rounded-pill"
                                     data-bs-toggle="modal"
                                     data-bs-target="#actionModal"
                                     data-id="{$brand.id}"
@@ -76,19 +77,19 @@
                                     Eliminar
                                 </button>
                             {else}
-                                <button type="button" class="btn btn-sm btn-warning"
+                                <button type="button" class="btn btn-sm btn-warning lh-1 rounded-pill""
                                     data-bs-toggle="modal"
                                     data-bs-target="#actionModal"
                                     data-id="{$brand.id}"
                                     data-action="restore">
                                     Restaurar
                                 </button>
-                                <button type="button" class="btn btn-sm btn-dark"
+                                <button type="button" class="btn btn-sm btn-dark lh-1 rounded-pill""
                                     data-bs-toggle="modal"
                                     data-bs-target="#actionModal"
                                     data-id="{$brand.id}"
                                     data-action="forceDelete">
-                                    Eliminar Permanentemente
+                                    Eliminar
                                 </button>
                             {/if}
                         </td>
@@ -160,7 +161,7 @@
             } else if (actionType === 'forceDelete') {
                 title.textContent = 'Confirmar eliminación permanente';
                 body.textContent = '⚠️ ADVERTENCIA: Esta acción NO se puede deshacer. ¿Estás seguro de que deseas eliminar permanentemente esta marca?';
-                submitBtn.textContent = 'Eliminar Permanentemente';
+                submitBtn.textContent = 'Eliminar';
                 submitBtn.className = 'btn btn-dark';
                 form.setAttribute('action', `{:url('brand_force_delete')}?id=${brandId}`);
             }

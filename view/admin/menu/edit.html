@@ -5,17 +5,28 @@
     <!-- Alertas de notificación -->
     {if isset($error)}
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i>
+            <i class="fas fa-exclamation-circle mr-2"></i>
             <strong>Error:</strong> {$error}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {/if}
 
+    <!-- DEBUG: Mostrar datos recuperados -->
+    
     {if isset($old_data) && $old_data}
         <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <i class="fas fa-info-circle me-2"></i>
+            <i class="fas fa-info-circle mr-2"></i>
             <strong>DEBUG Old Data:</strong>
             <pre>{:print_r($old_data, true)}</pre>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+
+    {if isset($error_field)}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <strong>DEBUG Error Field:</strong> {$error_field}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {/if}
@@ -42,11 +53,12 @@
                         <div class="mb-3">
                             <label for="title" class="form-label">Título del Menú <span class="text-danger">*</span></label>
                             <input type="text" class="form-control {if isset($error_field) && $error_field == 'title'}is-invalid{/if}" 
-                                   name="title" id="title" required 
-                                   maxlength="100" value="{if isset($old_data.title)}{$old_data.title}{else}{$menu.title|default=''}{/if}">
+                                   name="title" id="title" required value="{if isset($old_data.title)}{$old_data.title}{else}{$menu.title|default=''}{/if}">
+                            <!--
                             {if isset($error_field) && $error_field == 'title'}
                                 <div class="invalid-feedback">{$error}</div>
                             {/if}
+                            -->
                             <div class="form-text">Máximo 100 caracteres.</div>
                         </div>
                         
@@ -55,9 +67,11 @@
                             <input type="text" class="form-control {if isset($error_field) && $error_field == 'url'}is-invalid{/if}" 
                                    name="url" id="url" 
                                    maxlength="255" value="{if isset($old_data.url)}{$old_data.url}{else}{$menu.url|default=''}{/if}">
+                            <!--
                             {if isset($error_field) && $error_field == 'url'}
                                 <div class="invalid-feedback">{$error}</div>
                             {/if}
+                            -->
                         </div>
                     </div>
                     
@@ -69,9 +83,11 @@
                             <input type="number" class="form-control {if isset($error_field) && $error_field == 'order'}is-invalid{/if}" 
                                    name="order" id="order" 
                                    min="0" value="{if isset($old_data.order)}{$old_data.order}{else}{$menu.order|default='0'}{/if}">
+                            <!--
                             {if isset($error_field) && $error_field == 'order'}
                                 <div class="invalid-feedback">{$error}</div>
                             {/if}
+                            -->
                         </div>
                         
                         <div class="mb-3">
@@ -111,7 +127,7 @@
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label class="form-label">Título de la Columna <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" name="columns[{$i}][title]" value="{$column.title}" required maxlength="100">
+                                                <input type="text" class="form-control" name="columns[{$i}][title]" value="{$column.title}" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -208,11 +224,72 @@
       </div>
     </div>
 
+
+    <!-- Modal de aviso -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-exclamation-circle me-2"></i>Aviso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="alertMessage">Mensaje de aviso...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {/block}
 
 {block name="scripts"}
 <script>
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Variables que vienen desde el controlador
+    const errorField = "{if isset($error_field)}{$error_field}{/if}";
+    const errorMessage = "{if isset($error)}{$error}{/if}";
+
+    if (errorField) {
+        // Buscar input por name exacto
+        const field = document.querySelector(`[name="${errorField}"]`);
+        if (field) {
+            field.value = '';
+            field.blur(); // Quitar focus para que se vea el placeholder
+            field.placeholder = 'Por favor, ingresa un valor válido';
+            field.focus(); // Opcional: volver a dar focus
+            field.classList.add("is-invalid");
+
+            // Crear el div de feedback
+            const feedback = document.createElement("div");
+            feedback.className = "invalid-feedback d-block";
+            //feedback.textContent = errorMessage;
+            feedback.innerHTML = errorMessage;
+
+            // Insertar justo después del input
+            field.insertAdjacentElement("afterend", feedback);
+        }
+    }
+});
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
+
+
+        // Obtener elementos del modal de aviso
+    const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+    const alertMessage = document.getElementById('alertMessage');
+
+    // Función para mostrar mensaje en el modal
+    function showAlert(message) {
+        alertMessage.textContent = message;
+        alertModal.show();
+    }
 
     const form = document.querySelector('form');
     let elementToDelete = null;
@@ -228,7 +305,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (!valid) {
             e.preventDefault();
-            alert('Por favor, complete todos los campos obligatorios.');
+            //alert('Por favor, complete todos los campos obligatorios.');
+            showAlert('Por favor, complete todos los campos obligatorios.');
         }
     });
 

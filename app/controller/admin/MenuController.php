@@ -7,278 +7,183 @@ use app\BaseController;
 use think\facade\View;
 use think\Request;
 use think\facade\Session;
-use think\facade\Validate;
-use think\exception\ValidateException;
 use app\model\Menu;
-use app\model\MenuColumn;
-use app\model\MenuLink;
-use think\facade\Db;
 use app\service\MenuService;
 use app\validate\MenuFormValidator;
-
+use think\response\Redirect;
+use think\db\exception\ModelNotFoundException;
+use think\helper\Arr;
+use RuntimeException;
+use InvalidArgumentException;
+use Exception;
 
 class MenuController extends BaseController
 {
-    public function index()
+    private MenuFormValidator $menuValidator;
+
+    public function initialize(): void
     {
+        parent::initialize();
+        $this->menuValidator = app(MenuFormValidator::class);
+    }
+
+    public function index(): string
+    {
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+
         $menus = Menu::withTrashed()->with(['columns.links'])->order('order', 'asc')->paginate([
-        //$menus = Menu::with(['columns.links'])->order('order', 'asc')->paginate([
-            'list_rows' => 10,
+            'list_rows' => 5,
             'query'     => request()->param(),
         ]);
 
-        return view('admin/menu/list', [
+        View::assign([
             'menus' => $menus,
-            'success' => Session::get('success'),
-            'error' => Session::get('error'),
-            'pagination' => $menus->render(), // ✅ render() como método
+            'success' => $successMessage,
+            'error' => $errorMessage,
+            'pagination' => $menus->render(),
         ]);
+
+        return View::fetch('/admin/menu/list');
     }
 
-    public function create()
+    public function create(): string
     {
-        return View::fetch('admin/menu/create');
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
+        View::assign([
+            'old_data' => $oldData,
+            'error_field' => $errorField,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
+        return View::fetch('/admin/menu/create');
     }
 
-
-    public function save(Request $request)
-    {
-        $data = $request->post();
-
-        try {
-            MenuService::createMenuWithRelations($data);
-            Session::flash('success', 'Menú creado correctamente');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al guardar el menú: ' . $e->getMessage());
-        }
-
-        return redirect('/admin/menu/index');
-    }
-
-
-    /*
-    public function save(Request $request)
+    public function save(Request $request): Redirect
     {
         $data = $request->post();
+        $cleanData = $data; // ← CORRECCIÓN: Definir al inicio
 
-        try {
-            $menu = Menu::create([
-                'title' => $data['title'],
-                'url' => $data['url'],
-                'has_submenu' => !empty($data['columns']),
-                'order' => $data['order'] ?? 0,
-                'visible' => $data['visible'] ?? 1,
-            ]);
-
-            if (!empty($data['columns'])) {
-                foreach ($data['columns'] as $columnData) {
-                    $column = $menu->columns()->create([
-                        'title' => $columnData['title'],
-                        'order' => $columnData['order'] ?? 0,
-                    ]);
-
-                    if (!empty($columnData['links'])) {
-                        foreach ($columnData['links'] as $linkData) {
-                            $column->links()->create([
-                                'title' => $linkData['title'],
-                                'url' => $linkData['url'],
-                                'order' => $linkData['order'] ?? 0,
-                            ]);
-                        }
-                    }
-                }
+        // 1. PRIMERO validar (FUERA del try-catch)
+        if (!$this->menuValidator->check($data)) {
+            $error = $this->menuValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
+            
+            // Convertir formato brackets a dot notation
+            $dotPath = preg_replace('/\[(\w+)\]/', '.$1', $errorField);
+            
+            if (Arr::has($cleanData, $dotPath)) {
+                Arr::set($cleanData, $dotPath, '');
             }
 
-            Session::flash('success', 'Menú creado correctamente');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al guardar el menú: ' . $e->getMessage());
+            return redirect((string) url('menu_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
         }
 
-        return redirect('/admin/menu/index');
+        // 2. LUEGO procesar guardado (DENTRO del try-catch)
+        try {
+            MenuService::createMenuWithRelations($data);
+            return redirect((string) url('menu_index'))->with('success', 'Menú creado correctamente.'); // ← Corregido mensaje
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('menu_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $e->getMessage());
+        }
     }
 
-    */
-
-    public function edit($id)
+    public function edit(int $id): string|Redirect
     {
-        $menu = Menu::with(['columns.links'])->findOrFail($id);
-        return View::fetch('admin/menu/edit', 
-            [
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+        try {
+            $menu = Menu::with(['columns.links'])->findOrFail($id);
+            View::assign([
+                'error' => $errorMessage,
                 'menu' => $menu,
-                'error' => Session::get('error'),
+                'old_data' => $oldData,
+                'error_field' => $errorField
             ]);
+            return View::fetch('admin/menu/edit');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('menu_index'))->with('error', $e->getMessage());
+        }
     }
 
-
-
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): Redirect // ← Corregido tipo de retorno
     {
         $data = $request->post();
+        $cleanData = $data; // ← CORRECCIÓN: Definir al inicio
 
-        dump($id);
-        dump($data);
-
-
-        if (!is_numeric($id)) {
-            return json(['error' => 'ID inválido']);
-        }
-
-
-  
-        
-
-
-        $validate = new MenuFormValidator();
-        $validate->batch(true); // ← esto es clave
-
-        if (!$validate->check($data)) {
-            $errors = $validate->getError(); // ← Aquí definimos la variable correctamente
-
-            dump($errors);
+        // 1. PRIMERO validar (FUERA del try-catch)
+        if (!$this->menuValidator->check($data)) {
+            $error = $this->menuValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
             
-            Session::flash('error', is_array($errors) ? implode("\n", $errors) : $errors);
+            $dotPath = preg_replace('/\[(\w+)\]/', '.$1', $errorField);
+            
+            if (Arr::has($cleanData, $dotPath)) {
+                Arr::set($cleanData, $dotPath, '');
+            }
 
-            //return redirect('/admin/menu/edit/' . $id);
-            //return redirect('/admin/menu/index');
-
-            return redirect(url('/admin/menu/edit', ['id' => $id])->build());
-
-
+            return redirect((string) url('menu_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
         }
-
-        
-
-
 
         try {
             MenuService::updateMenuWithRelations($id, $data);
-            Session::flash('success', 'Menú actualizado correctamente');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al actualizar el menú: ' . $e->getMessage());
+            return redirect((string) url('menu_index'))->with('success', 'Menú actualizado correctamente.');
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('menu_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $e->getMessage());
         }
-
-        return redirect('/admin/menu/index');
     }
 
-
-    /*
-
-    public function update(Request $request, $id)
+    public function forceDelete(int $id): Redirect
     {
-        $menu = Menu::findOrFail($id);
-        $data = $request->post();
-
-        Db::startTrans();
         try {
-            // Actualizar el menú
-            $menu->save([
-                'title' => $data['title'],
-                'url' => $data['url'],
-                'has_submenu' => !empty($data['columns']),
-                'order' => $data['order'] ?? 0,
-                'visible' => $data['visible'] ?? 1,
-            ]);
-
-            $columnIds = [];
-            if (!empty($data['columns'])) {
-                foreach ($data['columns'] as $colData) {
-                    $column = !empty($colData['id']) 
-                        ? MenuColumn::where('menu_id', $menu->id)->find($colData['id']) 
-                        : new MenuColumn();
-
-                    if (!$column) {
-                        $column = new MenuColumn();
-                    }
-
-                    $column->menu_id = $menu->id;
-                    $column->title = $colData['title'];
-                    $column->order = $colData['order'] ?? 0;
-                    $column->save();
-                    $columnIds[] = $column->id;
-
-                    $linkIds = [];
-                    if (!empty($colData['links'])) {
-                        foreach ($colData['links'] as $linkData) {
-                            $link = !empty($linkData['id']) 
-                                ? MenuLink::where('column_id', $column->id)->find($linkData['id']) 
-                                : new MenuLink();
-
-                            if (!$link) {
-                                $link = new MenuLink();
-                            }
-
-                            $link->column_id = $column->id;
-                            $link->title = $linkData['title'];
-                            $link->url = $linkData['url'];
-                            $link->order = $linkData['order'] ?? 0;
-                            $link->save();
-                            $linkIds[] = $link->id;
-                        }
-
-                        // Eliminar enlaces que ya no están
-                        MenuLink::where('column_id', $column->id)
-                            ->whereNotIn('id', $linkIds)
-                            ->delete();
-                    }
-                }
-
-                // Eliminar columnas que ya no están
-                MenuColumn::where('menu_id', $menu->id)
-                    ->whereNotIn('id', $columnIds)
-                    ->delete();
-            } else {
-                // Si no hay columnas, eliminar todas las existentes
-                MenuColumn::where('menu_id', $menu->id)->delete();
-            }
-
-            Db::commit();
-            Session::flash('success', 'Menú actualizado correctamente');
-        } catch (\Exception $e) {
-            Db::rollback();
-            Session::flash('error', 'Error al actualizar el menú: ' . $e->getMessage());
+            $menu = Menu::onlyTrashed()->findOrFail($id);
+            $menu->force()->delete();
+            return redirect((string) url('menu_index'))->with('success', 'Menú eliminado permanentemente.');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('menu_index'))->with('error', 'Menú no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('menu_index'))->with('error', 'Error al eliminar el menú: ' . $e->getMessage());
         }
-
-        return redirect('/admin/menu/index');
     }
 
-    */
-
-
-    public function delete($id)
+    public function delete(int $id): Redirect
     {
-
         try {
             MenuService::deleteMenuWithRelations($id);
-            Session::flash('success', 'Menú eliminado correctamente');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al eliminar el menú: ' . $e->getMessage());
+            return redirect((string) url('menu_index'))->with('success', 'Menú eliminado correctamente.');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('menu_index'))->with('error', 'Menú no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('menu_index'))->with('error', 'Error al eliminar el menú: ' . $e->getMessage());
         }
-
-        return redirect('/admin/menu/index');
     }
 
-    /*
-    public function restore(Request $request, $id)
-    {
-        $request->checkToken('__token__');
-        $menu = Menu::onlyTrashed()->findOrFail($id);
-        $menu->restore();
-        return redirect('/admin/menu/index')->with('success', 'Menú restaurado correctamente');
-    }
-    */
-
-
-    public function restore($id)
+    public function restore(int $id): Redirect
     {
         try {
             MenuService::restoreMenuWithRelations($id);
-            Session::flash('success', 'Menú restaurado correctamente');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al restaurar el menú: ' . $e->getMessage());
+            return redirect((string) url('menu_index'))->with('success', 'Menú restaurado correctamente.');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('menu_index'))->with('error', 'Menú no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('menu_index'))->with('error', 'Error al restaurar el menú: ' . $e->getMessage());
         }
-
-        return redirect('/admin/menu/index');
     }
-
-
 }

@@ -11,9 +11,14 @@ use app\model\Brand;
 use app\validate\BrandFormValidator;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\exception\ValidateException;
 use app\service\ImageService;
 use think\response\Redirect;
 use app\BaseController;
+use RuntimeException;
+use InvalidArgumentException;
+use Exception;
+
 
 /**
  * Controlador para la gestión de marcas en el panel de administración
@@ -30,10 +35,6 @@ class BrandController extends BaseController
      * @var ImageService
      */
     protected ImageService $imageService;
-    /**
-     * @var AdminMenuService
-     */
-
     /**
      * Constructor del controlador
      *
@@ -79,7 +80,6 @@ class BrandController extends BaseController
      */
     public function create(): string
     {
-
         $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
         $oldData = Session::get('old_data');
@@ -94,6 +94,17 @@ class BrandController extends BaseController
         return View::fetch('/admin/brand/create');
     }
 
+
+    /**
+     * Devuelve el path al folder
+     * 
+     * @return string
+     */
+    private function getBrandImagePath(): string
+    {
+        return app()->getRootPath() . 'public/static/img/brand/';
+    }
+
     /**
      * Guarda una nueva marca en la base de datos
      * 
@@ -103,15 +114,13 @@ class BrandController extends BaseController
     public function save(Request $request): Redirect
     {
         $data = $request->post();
+        $cleanData = $data;
         // 1. PRIMERO validar (FUERA del try-catch)
         if (!$this->brandValidator->check($data)) {
-
             $error = $this->brandValidator->getError(); // Esto devuelve un array en ThinkPHP 8
             // Devuelve ['code' => campo, 'msg' => mensaje]
             $errorField = $error['code'];
             $errorMessage = $error['msg'];
-            // Limpiar solo el campo con error
-            $cleanData = $data;
             if (isset($cleanData[$errorField])) {
                 $cleanData[$errorField] = '';
             }
@@ -121,7 +130,6 @@ class BrandController extends BaseController
                 ->with('error', $errorMessage)
                 ->with('error_field', $errorField);
         }
-
         // 2. LUEGO procesar archivos (DENTRO del try-catch)
         try {
             // OBTENER ARCHIVOS
@@ -136,8 +144,9 @@ class BrandController extends BaseController
             }
 
             // Definir paths
-            $basePath = app()->getRootPath() . 'public/static/img/';
-            $topicPath = $basePath . 'brand/';
+            //$basePath = app()->getRootPath() . 'public/static/img/';
+            //$topicPath = $basePath . 'brand/';
+            $topicPath = $this->getBrandImagePath();
 
             // LÓGICA PARA LA IMAGEN PRINCIPAL (pic)
             if ($file) {
@@ -149,7 +158,7 @@ class BrandController extends BaseController
                         $data['brand_en'], 
                         null
                     );
-                } catch (\RuntimeException $e) {
+                } catch (RuntimeException $e) {
                     return redirect((string) url('brand_create'))
                         ->with('old_data', $data)
                         ->with('error', $e->getMessage());
@@ -167,7 +176,7 @@ class BrandController extends BaseController
                         $data['brand_en'], 
                         null
                     );
-                } catch (\RuntimeException $e) {
+                } catch (RuntimeException $e) {
                     return redirect((string) url('brand_create'))
                         ->with('old_data', $data)
                         ->with('error', $e->getMessage());
@@ -180,12 +189,12 @@ class BrandController extends BaseController
             Brand::create($data);
             return redirect((string) url('brand_index'))->with('success', 'Marca creada correctamente.');
 
-        } catch (\Exception $e) {
-            // Esto solo captura errores inesperados
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
             return redirect((string) url('brand_create'))
-                ->with('old_data', $data)
-                ->with('error', 'Error inesperado: ' . $e->getMessage());
+                ->with('old_data', $cleanData)
+                ->with('error', $e->getMessage());
         }
+
     }
 
 
@@ -198,19 +207,16 @@ class BrandController extends BaseController
      */
     public function edit(int $id): string|Redirect
     {
-        $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
         $oldData = Session::get('old_data');
         $errorField = Session::get('error_field');
-
         try {
             $brand = Brand::findOrFail($id);
             View::assign('error', $errorMessage);
             View::assign('brand', $brand);
             View::assign('old_data', $oldData);
             View::assign('error_field', $errorField);
-            return View::fetch('admin/brand/edit');
-            
+            return View::fetch('/admin/brand/edit');
         } catch (ModelNotFoundException $e) {
             return redirect((string) url('brand_index'))->with('error', $e->getMessage());
         }
@@ -229,11 +235,12 @@ class BrandController extends BaseController
     * @throws \RuntimeException Si ocurre un error durante el procesamiento de imágenes
     * @throws \InvalidArgumentException Si los datos de validación son incorrectos
      */
-    public function update(Request $request, int $id)
+    public function update(Request $request, int $id): Redirect
     {
         /** @var Brand $brand Instancia de la marca a actualizar */
         $brand = Brand::findOrFail($id);
         $data = $request->post();
+        $cleanData = $data;
 
         // OBTENER ARCHIVOS AL INICIO (antes de cualquier procesamiento)
         $file = null;
@@ -247,29 +254,24 @@ class BrandController extends BaseController
         }
 
         // Definir paths una sola vez
-        $basePath = app()->getRootPath() . 'public/static/img/';
-        $topicPath = $basePath . 'brand/';
+        //$basePath = app()->getRootPath() . 'public/static/img/';
+        //$topicPath = $basePath . 'brand/';
+        $topicPath = $this->getBrandImagePath();
 
-        try {
-            if (!$this->brandValidator->sceneUpdate($id)->check($data)) {
-                $error = $this->brandValidator->getError();
-                $errorField = $error['code'];
-                $errorMessage = $error['msg'];
 
-                // Limpiar solo el campo con error
-                $cleanData = $data;
-                if (isset($cleanData[$errorField])) {
-                    $cleanData[$errorField] = '';
-                }
+        if (!$this->brandValidator->sceneUpdate($id)->check($data)) {
+            $error = $this->brandValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
+            
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
+            }
 
-                return redirect((string) url('brand_edit', ['id' => $id]))
-                    ->with('old_data', $cleanData)
-                    ->with('error', $errorMessage)
-                    ->with('error_field', $errorField);
-                }
-
-        } catch (ValidateException $e) {
-            dump($e->getError());
+            return redirect((string) url('brand_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
         }
 
         try {
@@ -299,8 +301,10 @@ class BrandController extends BaseController
                             $data['brand_en'], 
                             $brand->pic
                         );
-                    } catch (\RuntimeException $e) {
-                        return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
+                    } catch (RuntimeException $e) {
+                        return redirect((string) url('brand_edit', ['id' => $id]))
+                            ->with('old_data', $cleanData)
+                            ->with('error', $e->getMessage());
                     }
                 }
             }
@@ -326,8 +330,10 @@ class BrandController extends BaseController
                             $data['brand_en'], 
                             $brand->block_pic
                         );
-                    } catch (\RuntimeException $e) {
-                        return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
+                    } catch (RuntimeException $e) {
+                        return redirect((string) url('brand_edit', ['id' => $id]))
+                            ->with('old_data', $cleanData)
+                            ->with('error', $e->getMessage());
                     }
                 }
             }
@@ -336,10 +342,11 @@ class BrandController extends BaseController
             $brand->save($data);
             return redirect((string) url('brand_index'))->with('success', 'Marca actualizada correctamente.');
 
-        } catch (\InvalidArgumentException $e) {
-            return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
-        } catch (\Exception $e) {
-            return redirect((string) url('brand_edit', ['id' => $id]))->with('error', $e->getMessage());
+
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('brand_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $e->getMessage());
         }
     }
 
@@ -349,14 +356,16 @@ class BrandController extends BaseController
      * @param int $id ID de la marca a eliminar permanentemente
      * @return \think\response\Redirect
      */
-    public function forceDelete(Request $request, int $id): Redirect
+    public function forceDelete(int $id): Redirect
     {
         try {
             $brand = Brand::onlyTrashed()->findOrFail($id);
             $brand->force()->delete();
             return redirect((string) url('brand_index'))->with('success', 'Marca eliminada permanentemente.');
         } catch (ModelNotFoundException $e) {
-            return redirect((string) url('brand_index'))->with('error', 'Marca no encontrada o ya fue eliminada permanentemente.');
+            return redirect((string) url('brand_index'))->with('error', 'Marca no encontrada o ya fue eliminada permanentemente.' . $e->getMessage());
+        } catch (Exception $e) {
+            return redirect((string) url('brand_index'))->with('error', 'Error al eliminar la marca: ' . $e->getMessage());
         }
     }
 
@@ -368,11 +377,17 @@ class BrandController extends BaseController
      * @param int $id ID de la marca a eliminar
      * @return \think\response\Redirect
      */
-    public function delete(Request $request, int $id): Redirect
+    public function delete(int $id): Redirect
     {
-        $brand = Brand::findOrFail($id);
-        $brand->delete();
-        return redirect((string) url('brand_index'))->with('success', 'Marca eliminada correctamente.');
+        try {
+            $brand = Brand::findOrFail($id);
+            $brand->delete();
+            return redirect((string) url('brand_index'))->with('success', 'Marca eliminada correctamente.');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('brand_index'))->with('error', 'Marca no encontrada o ya fue eliminada permanentemente.' . $e->getMessage());
+        } catch (Exception $e) {
+            return redirect((string) url('brand_index'))->with('error', 'Error al eliminar la marca: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -382,10 +397,16 @@ class BrandController extends BaseController
      * @param int $id ID de la marca a restaurar
      * @return \think\response\Redirect
      */
-    public function restore(Request $request, int $id): Redirect
+    public function restore(int $id): Redirect
     {
-        $brand = Brand::onlyTrashed()->findOrFail($id);
-        $brand->restore();
-        return redirect((string) url('brand_index'))->with('success', 'Marca restaurada correctamente.');
+        try {
+            $brand = Brand::onlyTrashed()->findOrFail($id);
+            $brand->restore();
+            return redirect((string) url('brand_index'))->with('success', 'Marca restaurada correctamente.');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('brand_index'))->with('error', 'Marca no encontrada o ya fue eliminada permanentemente.' . $e->getMessage());
+        } catch (Exception $e) {
+            return redirect((string) url('brand_index'))->with('error', 'Error al restaurar la marca: ' . $e->getMessage());
+        }
     }
 }

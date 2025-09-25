@@ -112,6 +112,78 @@ class MenuService
     }
     */
 
+
+public static function createMenuWithRelations(array $data): Menu
+{
+    Db::startTrans();
+    try {
+        $menu = Menu::create([
+            'title' => $data['title'],
+            'url' => $data['url'],
+            'has_submenu' => !empty($data['columns']),
+            'order' => $data['order'] ?? 0,
+            'visible' => $data['visible'] ?? 1,
+        ]);
+
+        if (!empty($data['columns'])) {
+            $columnsData = [];
+            
+            foreach ($data['columns'] as $columnData) {
+                $columnItem = [
+                    'menu_id' => $menu->id,
+                    'title' => $columnData['title'],
+                    'order' => $columnData['order'] ?? 0,
+                ];
+
+                // Si hay links, prepararlos también
+                if (!empty($columnData['links'])) {
+                    $linksData = [];
+                    foreach ($columnData['links'] as $linkData) {
+                        $linksData[] = [
+                            'column_id' => null, // Se asignará después
+                            'title' => $linkData['title'],
+                            'url' => $linkData['url'],
+                            'order' => $linkData['order'] ?? 0,
+                        ];
+                    }
+                    $columnItem['links'] = $linksData;
+                }
+
+                $columnsData[] = $columnItem;
+            }
+
+            // Guardar todas las columnas
+            $menu->columns()->saveAll($columnsData);
+
+            // Para los links anidados, necesitamos guardarlos después
+            foreach ($data['columns'] as $index => $columnData) {
+                if (!empty($columnData['links'])) {
+                    $column = $menu->columns[$index]; // La columna recién creada
+                    $linksData = [];
+                    
+                    foreach ($columnData['links'] as $linkData) {
+                        $linksData[] = [
+                            'column_id' => $column->id,
+                            'title' => $linkData['title'],
+                            'url' => $linkData['url'],
+                            'order' => $linkData['order'] ?? 0,
+                        ];
+                    }
+                    
+                    $column->links()->saveAll($linksData);
+                }
+            }
+        }
+
+        Db::commit();
+        return $menu;
+    } catch (\Exception $e) {
+        Db::rollback();
+        throw $e;
+    }
+}
+
+    /*
     public static function createMenuWithRelations(array $data): Menu
     {
         Db::startTrans();
@@ -150,6 +222,7 @@ class MenuService
             throw $e;
         }
     }
+    */
 
     public static function updateMenuWithRelations($id, array $data): bool
     {

@@ -2,7 +2,6 @@
 
 {block name="content"}
 
-
     {if isset($success)}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       <strong>Éxito:</strong> {$success}
@@ -17,8 +16,6 @@
     </div>
     {/if}
 
-
-
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold">
@@ -30,27 +27,24 @@
     </div>
 
     <div class="card-body">
-
-
         <table class="table table-bordered table-hover">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Título</th>
                     <th>URL</th>
-                    <!--<th>Visible</th>-->
                     <th>Orden</th>
                     <th>Columnas</th>
+                    <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {foreach $menus as $menu}
-                <tr>
+                <tr class="{if $menu.delete_time}table-secondary{/if}">
                     <td>{$menu.id}</td>
                     <td>{$menu.title}</td>
                     <td>{$menu.url}</td>
-                    <!--<td>{if $menu.visible}✔️{/if}</td>-->
                     <td>{$menu.order}</td>
                     <td>
                         <ul class="list-unstyled">
@@ -67,40 +61,50 @@
                         </ul>
                     </td>
                     <td>
-                        <a href="{:url('menu_edit', ['id' => $menu.id])}" class="btn btn-sm btn-primary">Editar</a>
-
                         {if !$menu.delete_time}
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#actionModal" data-id="{$menu.id}" data-action="delete">
+                            <span class="badge bg-success">Activo</span>
+                        {else}
+                            <span class="badge bg-danger">Eliminado</span>
+                        {/if}
+                    </td>
+                    <td>
+                        {if !$menu.delete_time}
+                            <a href="{:url('menu_edit', ['id' => $menu.id])}" class="btn btn-sm btn-primary lh-1 rounded-pill">Editar</a>
+                            <button type="button" class="btn btn-sm btn-danger lh-1 rounded-pill" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#actionModal" 
+                                    data-id="{$menu.id}" 
+                                    data-action="delete">
                                 Eliminar
                             </button>
                         {else}
-                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#actionModal" data-id="{$menu.id}" data-action="restore">
+                            <button type="button" class="btn btn-sm btn-warning lh-1 rounded-pill" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#actionModal" 
+                                    data-id="{$menu.id}" 
+                                    data-action="restore">
                                 Restaurar
                             </button>
+                            <button type="button" class="btn btn-sm btn-dark lh-1 rounded-pill" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#actionModal" 
+                                    data-id="{$menu.id}" 
+                                    data-action="forceDelete">
+                                Eliminar
+                            </button>
                         {/if}
-
                     </td>
                 </tr>
                 {/foreach}
             </tbody>
         </table>
-
     </div>
-
 </div>
-
-
 
 <div class="pagination pagination-primary">
 {$menus|raw}
 </div>
 
-
-
-<!--{$pagination}-->
-
-
-<!-- Modal de eliminación -->
 <!-- Modal genérico -->
 <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -118,46 +122,49 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn" id="actionModalSubmit">Aceptar</button>
         </div>
+      </div>
     </form>
   </div>
 </div>
 
+{/block}
 
+{block name="scripts"}
+    <!-- Script para el modal -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const actionModal = document.getElementById('actionModal');
+        const form = actionModal.querySelector('#actionForm');
+        const title = actionModal.querySelector('#actionModalLabel');
+        const body = actionModal.querySelector('#actionModalBody');
+        const submitBtn = actionModal.querySelector('#actionModalSubmit');
 
+        actionModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const menuId = button.getAttribute('data-id');
+            const actionType = button.getAttribute('data-action');
 
-
-
-
-
-<!-- Script para ambos modales -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const actionModal = document.getElementById('actionModal');
-    const form = actionModal.querySelector('#actionForm');
-    const title = actionModal.querySelector('#actionModalLabel');
-    const body = actionModal.querySelector('#actionModalBody');
-    const submitBtn = actionModal.querySelector('#actionModalSubmit');
-
-    actionModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const menuId = button.getAttribute('data-id');
-        const actionType = button.getAttribute('data-action');
-
-        if (actionType === 'delete') {
-            title.textContent = 'Confirmar eliminación';
-            body.textContent = '¿Estás seguro de que deseas eliminar este menú?';
-            submitBtn.textContent = 'Eliminar';
-            submitBtn.className = 'btn btn-danger';
-            form.setAttribute('action', `{:url('menu_delete')}?id=${menuId}`);
-        } else if (actionType === 'restore') {
-            title.textContent = 'Confirmar restauración';
-            body.textContent = '¿Estás seguro de que deseas restaurar este menú?';
-            submitBtn.textContent = 'Restaurar';
-            submitBtn.className = 'btn btn-warning';
-            form.setAttribute('action', `{:url('menu_restore')}?id=${menuId}`);
-        }
+            if (actionType === 'delete') {
+                title.textContent = 'Confirmar eliminación';
+                body.textContent = '¿Estás seguro de que deseas eliminar este menú? Se moverá a la papelera.';
+                submitBtn.textContent = 'Eliminar';
+                submitBtn.className = 'btn btn-danger';
+                form.setAttribute('action', `{:url('menu_delete')}?id=${menuId}`);
+            } else if (actionType === 'restore') {
+                title.textContent = 'Confirmar restauración';
+                body.textContent = '¿Estás seguro de que deseas restaurar este menú?';
+                submitBtn.textContent = 'Restaurar';
+                submitBtn.className = 'btn btn-warning';
+                form.setAttribute('action', `{:url('menu_restore')}?id=${menuId}`);
+            } else if (actionType === 'forceDelete') {
+                title.textContent = 'Confirmar eliminación permanente';
+                body.textContent = '⚠️ ADVERTENCIA: Esta acción NO se puede deshacer. ¿Estás seguro de que deseas eliminar este menú permanentemente?';
+                submitBtn.textContent = 'Eliminar';
+                submitBtn.className = 'btn btn-dark';
+                form.setAttribute('action', `{:url('menu_force_delete')}?id=${menuId}`);
+            }
+        });
     });
-});
-</script>
+    </script>
 
 {/block}
