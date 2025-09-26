@@ -5,186 +5,223 @@ namespace app\controller\admin;
 
 use app\BaseController;
 use think\facade\View;
-use think\Request;
-use think\facade\Db;
-use app\model\Meta;
-use think\facade\Validate;
 use think\facade\Session;
-use think\exception\PDOException;
-use think\db\exception\DuplicateException;
+use think\Request;
+use app\model\Meta;
+use app\validate\MetaFormValidator;
+use think\response\Redirect;
+use think\db\exception\ModelNotFoundException;
+use think\db\exception\DataNotFoundException;
+use RuntimeException;
+use InvalidArgumentException;
+use Exception;
 
 class MetaController extends BaseController
 {
-    // Mostrar listado
+    /**
+     * @var MetaFormValidator
+     */
+    private MetaFormValidator $metaValidator;
 
-    /*
-    public function initialize()
+    /**
+     * Inicializa el controlador
+     */
+    public function initialize(): void
     {
         parent::initialize();
-    }
-    */
-
-
-    private function getValidationRules(): array
-    {
-        return [
-            'rules' => [
-                'page'        => 'require|max:100',
-                'title'       => 'require|max:70',
-                'metatitle'   => 'max:70',
-                'description' => 'max:160',
-                'keywords'    => 'max:255',
-            ],
-            'messages' => [
-                'page.require'        => 'El campo página es obligatorio',
-                'page.max'            => 'El campo página no puede superar 100 caracteres',
-                'title.require'       => 'El título es obligatorio',
-                'title.max'           => 'El título no puede superar 70 caracteres',
-                'metatitle.max'       => 'El metatitle no puede superar 70 caracteres',
-                'description.max'     => 'La descripción no puede superar 160 caracteres',
-                'keywords.max'        => 'Las keywords no pueden superar 255 caracteres',
-            ]
-        ];
+        $this->metaValidator = app(MetaFormValidator::class);
     }
 
-
-
-    public function index()
+    /**
+     * Muestra el listado de metas con paginación
+     */
+    public function index(): string
     {
-        //$this->initialize(); // <<-- esto es obligatorio
         $successMessage = Session::get('success');
-        //dump($successMessage);
         $errorMessage = Session::get('error');
-        //dump($errorMessage);
 
-
-        //$metas = Meta::order('id', 'desc')->select();
-
-        
-        $metas = Meta::order('id', 'desc')->paginate([
-            'list_rows' => 10, // Número de registros por página
-            'query'     => request()->param(), // Mantiene parámetros en la URL
+        $metas = Meta::withTrashed()->order('id', 'desc')->paginate([
+            'list_rows' => 10,
+            'query'     => request()->param(),
         ]);
 
+        View::assign([
+            'metas' => $metas,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
 
-        //return View::fetch('list', ['metas' => $metas]);
-        return view('admin/meta/list', 
-            [
-                'metas' => $metas,
-                'error' => $errorMessage,
-                'success' => $successMessage,
-
-            ]);
+        return View::fetch('/admin/meta/list');
     }
 
-    // Mostrar formulario de creación
-    public function create()
+    /**
+     * Muestra el formulario para crear una nueva meta
+     */
+    public function create(): string
     {
-        return View::fetch('admin/meta/create'); // misma vista pero campos vacíos
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
+        View::assign([
+            'old_data' => $oldData,
+            'error_field' => $errorField,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
+
+        return View::fetch('/admin/meta/create');
     }
 
-    // Guardar creación
-    public function save(Request $request)
+    /**
+     * Guarda una nueva meta en la base de datos
+     */
+    public function save(Request $request): Redirect
     {
-        // Obtener datos POST
         $data = $request->post();
+        $cleanData = $data;
 
-        $validation = $this->getValidationRules();
-        $validate = Validate::rule($validation['rules'])->message($validation['messages']);
+        // 1. PRIMERO validar (FUERA del try-catch)
+        if (!$this->metaValidator->check($data)) {
+            $error = $this->metaValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
 
-        if (!$validate->check($data)) {
-            //return json(['error' => $validate->getError()], 400);
-            //Session::flash('error', $validate->getError());
-            //return redirect('/admin/meta/index');
-            return redirect('/admin/meta/index')->with('error', $validate->getError());
-
-        }
-        else
-        {
-
-            try {
-                Meta::create($data);
-                Session::flash('success', 'Meta creada correctamente');
-                return redirect('/admin/meta/index');
-            } catch (DuplicateException $e) {
-                // Captura errores SQL como duplicados
-
-                //dump($e);
-                //Session::flash('error', 'Error al guardar la meta: ' . $e->getMessage());
-
-                Session::flash('error', $e->getMessage());
-
-                /*
-
-                if (str_contains($e->getMessage(), 'Duplicate entry')) {
-                    Session::flash('error', 'Ya existe una meta con esa página.');
-                } else {
-                    Session::flash('error', 'Error al guardar la meta: ' . $e->getMessage());
-                }
-                */
-                return redirect('/admin/meta/index');
+            // Limpiar solo el campo con error
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
             }
 
+            return redirect((string) url('meta_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
+        }
 
-            /*
+        // 2. LUEGO procesar guardado (DENTRO del try-catch)
+        try {
             Meta::create($data);
-            Session::flash('success', 'Meta creada correctamente');
-            //return redirect('/admin/meta/index')->with('success', 'Meta creada correctamente');
-            return redirect('/admin/meta/index');
-            */
+            return redirect((string) url('meta_index'))->with('success', 'Meta creada correctamente.');
+
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('meta_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $e->getMessage());
         }
     }
 
-    // Mostrar formulario de edición
-    public function edit($id)
+    /**
+     * Muestra el formulario para editar una meta existente
+     */
+    public function edit(int $id): string|Redirect
     {
-        $this->initialize(); // <<-- esto es obligatorio
-        $meta = Meta::findOrFail($id);
-        return View::fetch('/admin/meta/edit', ['meta' => $meta]);
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
+        try {
+            $meta = Meta::findOrFail($id);
+            
+            View::assign([
+                'meta' => $meta,
+                'old_data' => $oldData,
+                'error_field' => $errorField,
+                'error' => $errorMessage,
+            ]);
+
+            return View::fetch('/admin/meta/edit');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('meta_index'))->with('error', 'Meta no encontrada.');
+        }
     }
 
-    // Guardar edición
-    public function update(Request $request, $id)
+    /**
+     * Actualiza una meta existente en la base de datos
+     */
+    public function update(Request $request, int $id): Redirect
     {
         $meta = Meta::findOrFail($id);
-        //$data = Request::post();
-
-        // Obtener datos POST
         $data = $request->post();
+        $cleanData = $data;
 
-        // Validar
-        $validation = $this->getValidationRules();
-        $validate = Validate::rule($validation['rules'])->message($validation['messages']);
+        // 1. PRIMERO validar (FUERA del try-catch)
+        if (!$this->metaValidator->sceneUpdate($id)->check($data)) {
+            $error = $this->metaValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
 
-        if (!$validate->check($data)) {
+            // Limpiar solo el campo con error
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
+            }
 
-            //return json(['error' => $validate->getError()], 400);
-            //Session::flash('error', $validate->getError());
-            return redirect('/admin/meta/index')->with('error', $validate->getError());
-
+            return redirect((string) url('meta_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
         }
-        else
-        {
 
+        try {
             $meta->save($data);
-            return redirect('/admin/meta/index')->with('success', 'Meta actualizada correctamente');
+            return redirect((string) url('meta_index'))->with('success', 'Meta actualizada correctamente.');
+
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('meta_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', $e->getMessage());
         }
     }
 
-    // Eliminar
-    public function delete(Request $request, $id)
+    /**
+     * Elimina una meta (soft delete)
+     */
+    public function delete(int $id): Redirect
     {
+        try {
+            $meta = Meta::findOrFail($id);
+            $meta->delete();
+            return redirect((string) url('meta_index'))->with('success', 'Meta eliminada correctamente.');
 
-        $check = $request->checkToken('__token__');
-        
-        if(false === $check) {
-            throw new ValidateException('invalid token');
-            return redirect('/admin/meta/index')->with('error', 'Token CSRF inválido');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('meta_index'))->with('error', 'Meta no encontrada.');
+        } catch (Exception $e) {
+            return redirect((string) url('meta_index'))->with('error', 'Error al eliminar la meta: ' . $e->getMessage());
         }
+    }
 
+    /**
+     * Elimina permanentemente una meta
+     */
+    public function forceDelete(int $id): Redirect
+    {
+        try {
+            $meta = Meta::onlyTrashed()->findOrFail($id);
+            $meta->force()->delete();
+            return redirect((string) url('meta_index'))->with('success', 'Meta eliminada permanentemente.');
 
-        $meta = Meta::findOrFail($id);
-        $meta->delete();
-        return redirect('/admin/meta/index')->with('success', 'Meta eliminada correctamente');
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('meta_index'))->with('error', 'Meta no encontrada.');
+        } catch (Exception $e) {
+            return redirect((string) url('meta_index'))->with('error', 'Error al eliminar la meta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Restaura una meta previamente eliminada
+     */
+    public function restore(int $id): Redirect
+    {
+        try {
+            $meta = Meta::onlyTrashed()->findOrFail($id);
+            $meta->restore();
+            return redirect((string) url('meta_index'))->with('success', 'Meta restaurada correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('meta_index'))->with('error', 'Meta no encontrada.');
+        } catch (Exception $e) {
+            return redirect((string) url('meta_index'))->with('error', 'Error al restaurar la meta: ' . $e->getMessage());
+        }
     }
 }

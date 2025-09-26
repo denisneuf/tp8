@@ -42,10 +42,13 @@ Route::group('admin/meta', function () {
     Route::post('save', 'app\controller\admin\MetaController@save')->name('meta_save');          // Guardar creación
     Route::get('edit', 'app\controller\admin\MetaController@edit')->pattern(['id' => '\d+'])->name('meta_edit'); // Formulario edición
     Route::post('update', 'app\controller\admin\MetaController@update')->pattern(['id' => '\d+'])->name('meta_update'); // Guardar edición
-    //Route::get('delete', 'app\controller\admin\MetaController@delete')->pattern(['id' => '\d+'])->name('meta_delete'); // Eliminar
     Route::post('delete', 'app\controller\admin\MetaController@delete')
     ->pattern(['id' => '\d+'])
     ->name('meta_delete');
+    Route::post('restore', 'app\controller\admin\MetaController@restore')
+    ->pattern(['id' => '\d+'])
+     ->name('meta_restore');
+     Route::post('force-delete', 'app\controller\admin\MetaController@forceDelete')->name('meta_force_delete');
 })->middleware('admin')->middleware('adminmenu');
 
 Route::group('admin/user', function () {

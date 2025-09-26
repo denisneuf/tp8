@@ -2,37 +2,317 @@
 
 {block name="content"}
 
-<h1>{if isset($meta)}Editar Meta{else}Crear Meta{/if}</h1>
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
-{if session('error')}
-<div class="alert alert-danger">{session('error')}</div>
-{/if}
+    {if isset($success)}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Éxito:</strong> {$success}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-tags me-2"></i>Crear Nuevos Metadatos
+            </h6>
+            <a href="{:url('meta_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{:url('meta_save')}" method="post" novalidate>
+                {:token_field()}
+                
+                <!-- Sección: Información Básica -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="page" class="form-label">Página <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'page'}is-invalid{/if}" 
+                                   name="page" id="page" required 
+                                   maxlength="100" value="{if isset($old_data.page)}{$old_data.page}{/if}"
+                                   placeholder="Ej: about, contact, home">
+                            {if isset($error_field) && $error_field == 'page'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Nombre único de la página (slug).</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'title'}is-invalid{/if}" 
+                                   name="title" id="title" required 
+                                   maxlength="70" value="{if isset($old_data.title)}{$old_data.title}{/if}"
+                                   placeholder="Título principal de la página">
+                            {if isset($error_field) && $error_field == 'title'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 70 caracteres. Aparece en la pestaña del navegador.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-search me-2"></i>SEO Optimización</h5>
+                        
+                        <div class="mb-3">
+                            <label for="metatitle" class="form-label">Meta Título</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'metatitle'}is-invalid{/if}" 
+                                   name="metatitle" id="metatitle" 
+                                   maxlength="70" value="{if isset($old_data.metatitle)}{$old_data.metatitle}{/if}"
+                                   placeholder="Título para motores de búsqueda">
+                            {if isset($error_field) && $error_field == 'metatitle'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 70 caracteres. Título específico para SEO.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="keywords" class="form-label">Palabras Clave</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'keywords'}is-invalid{/if}" 
+                                   name="keywords" id="keywords" 
+                                   maxlength="255" value="{if isset($old_data.keywords)}{$old_data.keywords}{/if}"
+                                   placeholder="palabra1, palabra2, palabra3">
+                            {if isset($error_field) && $error_field == 'keywords'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. Separadas por comas.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección: Descripción -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-text-paragraph me-2"></i>Descripción</h5>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Meta Descripción</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'description'}is-invalid{/if}" 
+                                      name="description" id="description" 
+                                      rows="3" maxlength="160" 
+                                      placeholder="Descripción que aparece en los resultados de búsqueda">{if isset($old_data.description)}{$old_data.description}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'description'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">
+                                Máximo 160 caracteres. 
+                                <span id="charCount">
+                                    {if isset($old_data.description)}
+                                        {$old_data.description|mb_strlen}
+                                    {else /}
+                                        0
+                                    {/if}/160
+                                </span> caracteres usados.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección: Open Graph -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-share me-2"></i>Open Graph (Redes Sociales)</h5>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Opcional:</strong> Si dejas estos campos vacíos, se usarán los valores básicos automáticamente.
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="og_title" class="form-label">OG Título</label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'og_title'}is-invalid{/if}" 
+                                           name="og_title" id="og_title" 
+                                           maxlength="70" value="{if isset($old_data.og_title)}{$old_data.og_title}{/if}"
+                                           placeholder="Título para Facebook, LinkedIn, etc.">
+                                    {if isset($error_field) && $error_field == 'og_title'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Máximo 70 caracteres. Si vacío, usa el Título principal.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="og_description" class="form-label">OG Descripción</label>
+                                    <textarea class="form-control {if isset($error_field) && $error_field == 'og_description'}is-invalid{/if}" 
+                                              name="og_description" id="og_description" 
+                                              rows="2" maxlength="160" 
+                                              placeholder="Descripción para redes sociales">{if isset($old_data.og_description)}{$old_data.og_description}{/if}</textarea>
+                                    {if isset($error_field) && $error_field == 'og_description'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Máximo 160 caracteres. Si vacío, usa la Meta Descripción.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="og_image" class="form-label">OG Imagen URL</label>
+                                    <input type="url" class="form-control {if isset($error_field) && $error_field == 'og_image'}is-invalid{/if}" 
+                                           name="og_image" id="og_image" 
+                                           maxlength="255" value="{if isset($old_data.og_image)}{$old_data.og_image}{/if}"
+                                           placeholder="https://cdn.tudominio.com/imagen-og.jpg">
+                                    {if isset($error_field) && $error_field == 'og_image'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">
+                                        📏 <strong>Recomendado:</strong> 1200×630 pixels<br>
+                                        🖼️ <strong>Formatos:</strong> JPEG, PNG, WebP<br>
+                                        ☁️ <strong>Subir a:</strong> CDN (Cloudinary, Imgix, etc.)
+                                    </div>
+                                    
+                                    <!-- Previsualización de la imagen -->
+                                    <div id="ogImagePreview" class="mt-2 p-3 border rounded text-center bg-light">
+                                        <img id="ogPreviewImg" src="" style="max-width: 100%; display: none;" class="img-fluid mb-2 rounded">
+                                        <div id="ogPreviewText" class="text-muted small">Previsualización de Open Graph Image</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="og_type" class="form-label">OG Tipo</label>
+                                    <select class="form-control {if isset($error_field) && $error_field == 'og_type'}is-invalid{/if}" 
+                                            name="og_type" id="og_type">
+                                        <option value="website" {if isset($old_data.og_type) && $old_data.og_type == 'website'}selected{/if}>Website</option>
+                                        <option value="article" {if isset($old_data.og_type) && $old_data.og_type == 'article'}selected{/if}>Article</option>
+                                        <option value="product" {if isset($old_data.og_type) && $old_data.og_type == 'product'}selected{/if}>Product</option>
+                                        <option value="profile" {if isset($old_data.og_type) && $old_data.og_type == 'profile'}selected{/if}>Profile</option>
+                                    </select>
+                                    {if isset($error_field) && $error_field == 'og_type'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Tipo de contenido para redes sociales.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Crear Metadatos
+                    </button>
+                    <a href="{:url('meta_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-<form action="{:url('meta_save')}" method="post" novalidate>
-    <div class="mb-3">
-        <label for="page" class="form-label">Page</label>
-        <input type="text" class="form-control" name="page" id="page" value="" required>
-    </div>
-    <div class="mb-3">
-        <label for="title" class="form-label">Title</label>
-        <input type="text" class="form-control" name="title" id="title" value="" required>
-    </div>
-    <div class="mb-3">
-        <label for="metatitle" class="form-label">MetaTitle</label>
-        <input type="text" class="form-control" name="metatitle" id="metatitle" value="" required>
-    </div>
-    <div class="mb-3">
-        <label for="description" class="form-label">Description</label>
-        <textarea class="form-control" name="description" id="description"></textarea>
-    </div>
-    <div class="mb-3">
-        <label for="keywords" class="form-label">Keywords</label>
-        <input type="text" class="form-control" name="keywords" id="keywords" value="">
-    </div>
+{/block}
 
-    <button type="submit" class="btn btn-primary">Crear</button>
-<a href="{:url('meta_index')}" class="btn btn-secondary">Cancelar</a>
-</form>
+{block name="scripts"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contador de caracteres para la descripción
+    const descriptionTextarea = document.getElementById('description');
+    const charCount = document.getElementById('charCount');
+    
+    if (descriptionTextarea && charCount) {
+        // Actualizar contador al cargar la página
+        charCount.textContent = descriptionTextarea.value.length + '/160';
+        
+        // Actualizar contador mientras se escribe
+        descriptionTextarea.addEventListener('input', function() {
+            charCount.textContent = this.value.length + '/160';
+            
+            // Cambiar color si se acerca al límite
+            if (this.value.length > 150) {
+                charCount.className = 'text-warning';
+            } else if (this.value.length > 155) {
+                charCount.className = 'text-danger';
+            } else {
+                charCount.className = 'text-muted';
+            }
+        });
+    }
+    
+    // Previsualización de OG Image
+    const ogImageInput = document.getElementById('og_image');
+    const ogPreviewImg = document.getElementById('ogPreviewImg');
+    const ogPreviewText = document.getElementById('ogPreviewText');
 
+    if (ogImageInput && ogPreviewImg && ogPreviewText) {
+        // Previsualizar al cargar si hay valor
+        if (ogImageInput.value) {
+            ogPreviewImg.src = ogImageInput.value;
+            ogPreviewImg.style.display = 'block';
+            ogPreviewText.textContent = 'Vista previa de Open Graph Image';
+        }
+        
+        // Previsualizar al cambiar la URL
+        ogImageInput.addEventListener('input', function() {
+            if (this.value) {
+                ogPreviewImg.src = this.value;
+                ogPreviewImg.style.display = 'block';
+                ogPreviewText.textContent = 'Cargando...';
+            } else {
+                ogPreviewImg.style.display = 'none';
+                ogPreviewText.textContent = 'Previsualización de Open Graph Image';
+            }
+        });
+        
+        // Validar que la imagen se carga correctamente
+        ogPreviewImg.addEventListener('error', function() {
+            ogPreviewText.innerHTML = '❌ Error al cargar la imagen. Verifica la URL.';
+            this.style.display = 'none';
+        });
+        
+        ogPreviewImg.addEventListener('load', function() {
+            ogPreviewText.innerHTML = '✅ Imagen cargada correctamente';
+        });
+    }
+    
+    // Validación básica del formulario
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar campos requeridos
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor, complete los campos obligatorios marcados con *.');
+        }
+    });
+    
+    // Auto-sugerir page basado en title
+    const titleInput = document.getElementById('title');
+    const pageInput = document.getElementById('page');
+    
+    if (titleInput && pageInput) {
+        titleInput.addEventListener('blur', function() {
+            // Solo sugerir si el campo page está vacío
+            if (!pageInput.value.trim()) {
+                const pageSlug = this.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+                pageInput.value = pageSlug;
+            }
+        });
+    }
+});
+</script>
 {/block}
