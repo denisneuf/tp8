@@ -19,7 +19,7 @@ composer.phar
 .DS_Store
 Thumbs.db
 
-/public/static/img/
+/public/static/img/*
 
 # Configuración local
 # /config/database.php
