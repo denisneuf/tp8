@@ -20,6 +20,7 @@ composer.phar
 Thumbs.db
 
 /public/static/img/*
+!public/static/img/
 
 # Configuración local
 # /config/database.php
