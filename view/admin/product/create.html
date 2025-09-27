@@ -1,188 +1,453 @@
 {extend name="admin/layout" /}
 
 {block name="content"}
-<div class="card">
-    <div class="card-header">
-        <h3>Nuevo producto</h3>
-    </div>
-    <div class="card-body">
-        <form method="post" action="{:url('product_save')}" enctype="multipart/form-data">
-            <ul class="nav nav-tabs" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" data-bs-toggle="tab" data-toggle="tab" href="#general" role="tab">General</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" data-toggle="tab" href="#attributes" role="tab">Atributos especiales</a>
-                </li>
-            </ul>
 
-            <div class="tab-content pt-3">
-                <!-- General -->
-                <div class="tab-pane fade show active" id="general" role="tabpanel">
-                    <div class="form-group">
-                        <label>Nombre</label>
-                        <input type="text" name="name" class="form-control" required>
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+    {if isset($success)}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Éxito:</strong> {$success}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
+
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-cube me-2"></i>Crear Nuevo Producto
+            </h6>
+            <a href="{:url('product_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{:url('product_save')}" method="post" novalidate enctype="multipart/form-data">
+                {:token_field()}
+                
+                <!-- Tabs de navegación -->
+                <ul class="nav nav-tabs mb-4" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#general" role="tab">
+                            <i class="bi bi-info-circle me-1"></i>Información General
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#attributes" role="tab">
+                            <i class="bi bi-tags me-1"></i>Atributos Especiales
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- Tab: Información General -->
+                    <div class="tab-pane fade show active" id="general" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Nombre del Producto <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'name'}is-invalid{/if}" 
+                                           name="name" id="name" required 
+                                           maxlength="255" value="{if isset($old_data.name)}{$old_data.name}{/if}"
+                                           placeholder="Nombre completo del producto">
+                                    {if isset($error_field) && $error_field == 'name'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Máximo 255 caracteres. Este campo es obligatorio.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'slug'}is-invalid{/if}" 
+                                           name="slug" id="slug" required 
+                                           maxlength="255" value="{if isset($old_data.slug)}{$old_data.slug}{/if}"
+                                           placeholder="nombre-del-producto">
+                                    {if isset($error_field) && $error_field == 'slug'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Máximo 255 caracteres. URL amigable del producto.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="asin" class="form-label">ASIN <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'asin'}is-invalid{/if}" 
+                                           name="asin" id="asin" required 
+                                           maxlength="50" value="{if isset($old_data.asin)}{$old_data.asin}{/if}"
+                                           placeholder="B0XXXXXXXXX">
+                                    {if isset($error_field) && $error_field == 'asin'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Código único de identificación de Amazon.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="sku" class="form-label">SKU <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'sku'}is-invalid{/if}" 
+                                           name="sku" id="sku" required 
+                                           maxlength="100" value="{if isset($old_data.sku)}{$old_data.sku}{/if}"
+                                           placeholder="SKU-001">
+                                    {if isset($error_field) && $error_field == 'sku'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Código único de stock del producto.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="bi bi-building me-2"></i>Fabricante y Precio</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="manufacturer" class="form-label">Fabricante <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'manufacturer'}is-invalid{/if}" 
+                                           name="manufacturer" id="manufacturer" required 
+                                           maxlength="255" value="{if isset($old_data.manufacturer)}{$old_data.manufacturer}{/if}"
+                                           placeholder="Nombre del fabricante">
+                                    {if isset($error_field) && $error_field == 'manufacturer'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="productcode" class="form-label">Código de Producto</label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'productcode'}is-invalid{/if}" 
+                                           name="productcode" id="productcode" 
+                                           maxlength="100" value="{if isset($old_data.productcode)}{$old_data.productcode}{/if}"
+                                           placeholder="Código interno">
+                                    {if isset($error_field) && $error_field == 'productcode'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Precio ($)</label>
+                                    <input type="number" step="0.01" min="0" 
+                                           class="form-control {if isset($error_field) && $error_field == 'price'}is-invalid{/if}" 
+                                           name="price" id="price" 
+                                           value="{if isset($old_data.price)}{$old_data.price}{/if}"
+                                           placeholder="0.00">
+                                    {if isset($error_field) && $error_field == 'price'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="amazonlink" class="form-label">Enlace de Amazon</label>
+                                    <input type="url" class="form-control {if isset($error_field) && $error_field == 'amazonlink'}is-invalid{/if}" 
+                                           name="amazonlink" id="amazonlink" 
+                                           maxlength="500" value="{if isset($old_data.amazonlink)}{$old_data.amazonlink}{/if}"
+                                           placeholder="https://www.amazon.com/dp/ASIN">
+                                    {if isset($error_field) && $error_field == 'amazonlink'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="bi bi-image me-2"></i>Imagen del Producto</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="pic" class="form-label">Imagen Principal</label>
+                                    <input type="file" class="form-control {if isset($error_field) && $error_field == 'pic'}is-invalid{/if}" 
+                                           name="pic" id="pic" accept="image/*">
+                                    {if isset($error_field) && $error_field == 'pic'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">
+                                        📏 <strong>Requisitos:</strong> Imagen cuadrada (mismo ancho y alto)<br>
+                                        📐 <strong>Tamaño mínimo:</strong> 1500×1500 píxeles<br>
+                                        🖼️ <strong>Formatos:</strong> JPG, PNG, WebP
+                                    </div>
+                                    <!-- Contenedor para previsualización -->
+                                    <div id="picPreview" class="mt-2"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="bi bi-diagram-3 me-2"></i>Categorización</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="brand_id" class="form-label">Marca <span class="text-danger">*</span></label>
+                                    <select class="form-control {if isset($error_field) && $error_field == 'brand_id'}is-invalid{/if}" 
+                                            name="brand_id" id="brand_id" required>
+                                        <option value="">Selecciona una marca</option>
+                                        {volist name="brands" id="brand"}
+                                            <option value="{$brand.id}" {if isset($old_data.brand_id) && $old_data.brand_id == $brand.id}selected{/if}>
+                                                {$brand.brand_en}
+                                            </option>
+                                        {/volist}
+                                    </select>
+                                    {if isset($error_field) && $error_field == 'brand_id'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="category_id" class="form-label">Categoría <span class="text-danger">*</span></label>
+                                    <select class="form-control {if isset($error_field) && $error_field == 'category_id'}is-invalid{/if}" 
+                                            name="category_id" id="category_id" required>
+                                        <option value="">Selecciona una categoría</option>
+                                        {volist name="categories" id="category"}
+                                            <option value="{$category.id}" {if isset($old_data.category_id) && $old_data.category_id == $category.id}selected{/if}>
+                                                {$category.txt_short}
+                                            </option>
+                                        {/volist}
+                                    </select>
+                                    {if isset($error_field) && $error_field == 'category_id'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="product_type_id" class="form-label">Tipo de Producto <span class="text-danger">*</span></label>
+                                    <select class="form-control {if isset($error_field) && $error_field == 'product_type_id'}is-invalid{/if}" 
+                                            name="product_type_id" id="product_type_id" required>
+                                        <option value="">Selecciona un tipo</option>
+                                        {volist name="productTypes" id="type"}
+                                            <option value="{$type.id}" {if isset($old_data.product_type_id) && $old_data.product_type_id == $type.id}selected{/if}>
+                                                {$type.txt_short}
+                                            </option>
+                                        {/volist}
+                                    </select>
+                                    {if isset($error_field) && $error_field == 'product_type_id'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3"><i class="bi bi-text-paragraph me-2"></i>Descripción y Stock</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Descripción del Producto</label>
+                                    <textarea class="form-control {if isset($error_field) && $error_field == 'description'}is-invalid{/if}" 
+                                              name="description" id="description" 
+                                              rows="4" maxlength="2000">{if isset($old_data.description)}{$old_data.description}{/if}</textarea>
+                                    {if isset($error_field) && $error_field == 'description'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Máximo 2000 caracteres.</div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="stock" class="form-label">Stock</label>
+                                            <input type="number" min="0" 
+                                                   class="form-control {if isset($error_field) && $error_field == 'stock'}is-invalid{/if}" 
+                                                   name="stock" id="stock" 
+                                                   value="{if isset($old_data.stock)}{$old_data.stock}{else}0{/if}">
+                                            {if isset($error_field) && $error_field == 'stock'}
+                                                <div class="invalid-feedback">{$error}</div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="like" class="form-label">Likes</label>
+                                            <input type="number" min="0" 
+                                                   class="form-control {if isset($error_field) && $error_field == 'like'}is-invalid{/if}" 
+                                                   name="like" id="like" 
+                                                   value="{if isset($old_data.like)}{$old_data.like}{else}0{/if}">
+                                            {if isset($error_field) && $error_field == 'like'}
+                                                <div class="invalid-feedback">{$error}</div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Estado</label>
+                                            <div class="form-check">
+                                                <input type="hidden" name="visible" value="0">
+                                                <input class="form-check-input {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                                       type="checkbox" id="visible" name="visible" value="1"
+                                                       {if !isset($old_data.visible) || (isset($old_data.visible) && $old_data.visible == 1)}checked{/if}>
+                                                <label class="form-check-label" for="visible">Visible</label>
+                                            </div>
+                                            <div class="form-check mt-2">
+                                                <input type="hidden" name="available" value="0">
+                                                <input class="form-check-input {if isset($error_field) && $error_field == 'available'}is-invalid{/if}" 
+                                                       type="checkbox" id="available" name="available" value="1"
+                                                       {if !isset($old_data.available) || (isset($old_data.available) && $old_data.available == 1)}checked{/if}>
+                                                <label class="form-check-label" for="available">Disponible</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label>Slug</label>
-                        <input type="text" name="slug" class="form-control" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>SKU</label>
-                        <input type="text" name="sku" class="form-control" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>ASIN</label>
-                        <input type="text" name="asin" class="form-control" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Fabricante</label>
-                        <input type="text" name="manufacturer" class="form-control" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Código de producto</label>
-                        <input type="text" name="productcode" class="form-control">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Enlace de Amazon</label>
-                        <input type="url" name="amazonlink" class="form-control">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Precio</label>
-                        <input type="number" step="0.01" name="price" class="form-control">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Descripción</label>
-                        <textarea name="description" class="form-control"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Stock</label>
-                        <input type="number" name="stock" class="form-control" value="0">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Likes</label>
-                        <input type="number" name="like" class="form-control">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Visible</label>
-                        <select name="visible" class="form-control">
-                            <option value="0">No</option>
-                            <option value="1">Sí</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Disponible</label>
-                        <select name="available" class="form-control">
-                            <option value="0">No</option>
-                            <option value="1">Sí</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Imagen principal</label>
-                        <input type="file" name="pic" class="form-control-file">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Marca</label>
-                        <select name="brand_id" class="form-control" required>
-                            <option value="">Selecciona una marca</option>
-                            {volist name="brands" id="brand"}
-                                <option value="{$brand.id}">{$brand.brand_en}</option>
-                            {/volist}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Categoría</label>
-                        <select name="category_id" class="form-control" required>
-                            <option value="">Selecciona una categoría</option>
-                            {volist name="categories" id="category"}
-                                <option value="{$category.id}">{$category.txt_short}</option>
-                            {/volist}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Tipo de producto</label>
-                        <select name="product_type_id" class="form-control" required>
-                            <option value="">Selecciona un tipo</option>
-                            {volist name="productTypes" id="type"}
-                                <option value="{$type.id}">{$type.txt_short}</option>
-                            {/volist}
-                        </select>
+                    
+                    <!-- Tab: Atributos Especiales -->
+                    <div class="tab-pane fade" id="attributes" role="tabpanel">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Los campos especiales se cargarán automáticamente cuando selecciones un tipo de producto.
+                        </div>
+                        <div id="specialFieldsContainer">
+                            <p class="text-muted">Selecciona un tipo de producto en la pestaña "Información General" para ver los campos especializados.</p>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Atributos especiales -->
-                <div class="tab-pane fade" id="attributes" role="tabpanel">
-                    <p class="text-muted">Aquí se mostrarán los campos especiales según el tipo de producto seleccionado.</p>
+                
+                <!-- Botones de acción -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Crear Producto
+                    </button>
+                    <a href="{:url('product_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
                 </div>
-            </div>
-
-            <div class="form-group mt-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-                <a href="{:url('product_index')}" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
+
+
+
+<!-- Modal de aviso -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-exclamation-circle me-2"></i>Aviso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="alertMessage">Mensaje de aviso...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM cargado - Iniciando gestión de campos especiales');
-    
-    const productTypeSelect = document.querySelector('select[name="product_type_id"]');
-    const attributesTab = document.getElementById('attributes');
-    
-    if (!productTypeSelect || !attributesTab) {
-        console.error('❌ Elementos no encontrados');
-        return;
-    }
-    
-    productTypeSelect.addEventListener('change', function() {
-        const productTypeId = this.value;
-        console.log('🎯 Tipo de producto seleccionado:', productTypeId);
-        
-        if (productTypeId) {
-            // Mostrar loading
-            attributesTab.innerHTML = '<div class="text-center"><div class="spinner-border"></div><p>Cargando campos especializados...</p></div>';
-            
-            // Usar la URL correcta con el nombre de la ruta
-            fetch('/admin/product/get-special-fields?product_type_id=' + productTypeId)
-                .then(response => {
-                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
-                    return response.text();
-                })
-                .then(data => {
-                    attributesTab.innerHTML = data;
-                    console.log('✅ Campos especializados cargados correctamente');
-                })
-                .catch(error => {
-                    console.error('❌ Error al cargar campos:', error);
-                    attributesTab.innerHTML = '<p class="text-danger">Error al cargar campos especializados</p>';
-                });
-        } else {
-            attributesTab.innerHTML = '<p class="text-muted">Selecciona un tipo de producto para ver sus campos especializados</p>';
-        }
-    });
-    
-    console.log('✅ Event listener configurado correctamente');
-});
-</script>
 
 {/block}
 
+{block name="scripts"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
 
+
+
+    // Obtener elementos del modal de aviso
+    const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+    const alertMessage = document.getElementById('alertMessage');
+
+    // Función para mostrar mensaje en el modal
+    function showAlert(message) {
+        alertMessage.textContent = message;
+        alertModal.show();
+    }
+
+    // Gestión de campos especiales
+    const productTypeSelect = document.getElementById('product_type_id');
+    const specialFieldsContainer = document.getElementById('specialFieldsContainer');
+    
+    if (productTypeSelect && specialFieldsContainer) {
+        productTypeSelect.addEventListener('change', function() {
+            const productTypeId = this.value;
+            
+            if (productTypeId) {
+                specialFieldsContainer.innerHTML = '<div class="text-center"><div class="spinner-border"></div><p>Cargando campos especializados...</p></div>';
+                
+                fetch('{:url("product_get_special_fields")}?product_type_id=' + productTypeId)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                        return response.text();
+                    })
+                    .then(data => {
+                        specialFieldsContainer.innerHTML = data;
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar campos:', error);
+                        specialFieldsContainer.innerHTML = '<p class="text-danger">Error al cargar campos especializados</p>';
+                    });
+            } else {
+                specialFieldsContainer.innerHTML = '<p class="text-muted">Selecciona un tipo de producto para ver sus campos especializados</p>';
+            }
+        });
+    }
+    
+    // Auto-generar slug desde el nombre
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    
+    if (nameInput && slugInput) {
+        nameInput.addEventListener('blur', function() {
+            if (!slugInput.value.trim()) {
+                const slug = this.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+                slugInput.value = slug;
+            }
+        });
+    }
+    
+    // Previsualización de imagen
+    const picInput = document.getElementById('pic');
+    
+    function createPreview(input, previewId) {
+        const previewContainer = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `
+                    <div class="mt-2">
+                        <img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px; max-width: 100%;">
+                        <button type="button" class="btn btn-sm btn-danger mt-2" onclick="document.getElementById('${previewId}').innerHTML=''">
+                            <i class="bi bi-x-circle"></i> Eliminar previsualización
+                        </button>
+                    </div>
+                `;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    if (picInput) {
+        picInput.addEventListener('change', function() {
+            createPreview(this, 'picPreview');
+        });
+    }
+    
+    // Validación del formulario
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            //alert('Por favor, complete todos los campos obligatorios marcados con *.');
+            showAlert('Por favor, complete todos los campos obligatorios marcados con *.');
+        }
+    });
+});
+</script>
+{/block}

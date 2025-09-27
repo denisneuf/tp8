@@ -1,8 +1,11 @@
 <?php
+declare(strict_types=1);
+
 namespace app\controller\admin;
 
 use app\BaseController;
 use think\facade\View;
+use think\facade\Session;
 use think\Request;
 use app\model\Product;
 use app\model\Brand;
@@ -11,39 +14,53 @@ use app\model\ProductType;
 use app\model\ProductSpecialField;
 use app\model\ProductSpecialValue;
 use app\validate\ProductFormValidator;
-use think\facade\Session;
-use think\facade\Filesystem;
-use think\Image;
+use app\service\ImageService;
+use think\response\Redirect;
+use think\db\exception\ModelNotFoundException;
+use think\db\exception\DataNotFoundException;
+use RuntimeException;
+use InvalidArgumentException;
+use Exception;
 
 class ProductController extends BaseController
 {
-    public function index()
+    private ProductFormValidator $productValidator;
+    protected ImageService $imageService;
+
+    public function initialize(): void
     {
+        parent::initialize();
+        $this->productValidator = app(ProductFormValidator::class);
+        $this->imageService = app(ImageService::class);
+    }
 
-
+    public function index(): string
+    {
         $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
 
 
-        /*
-        $products = Product::with(['brand', 'category', 'productType'])
-            ->order('create_time', 'desc')
-            ->paginate(20);
-        */
+        $products = Product::withTrashed(['brand', 'category', 'productType'])->paginate([
+            'list_rows' => 10,
+            'query'     => request()->param(),
+        ]);
 
-        $products = Product::with(['brand', 'category', 'productType'])->select();    
-
-        //dump($products);
-
-        View::assign('products', $products);
-        View::assign('success', $successMessage);
-        View::assign('error', $errorMessage);
+        View::assign([
+            'products' => $products,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
 
         return View::fetch('admin/product/list');
     }
 
-    public function create()
+    public function create(): string
     {
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
         $brands = Brand::order('brand_en')->select();
         $categories = Category::order('txt_short')->select();
         $productTypes = ProductType::order('name')->select();
@@ -52,30 +69,16 @@ class ProductController extends BaseController
             'brands' => $brands,
             'categories' => $categories,
             'productTypes' => $productTypes,
-            'specialFields' => collect(), // Campos vacíos inicialmente
-            'specialValues' => [] // Valores vacíos inicialmente
+            'specialFields' => collect(),
+            'specialValues' => [],
+            'old_data' => $oldData,
+            'error_field' => $errorField,
+            'success' => $successMessage,
+            'error' => $errorMessage,
         ]);
 
         return View::fetch('admin/product/create');
     }
-
-    /*
-    public function create()
-    {
-        $brands = Brand::order('brand_en')->select();
-        $categories = Category::order('txt_short')->select();
-        $productTypes = ProductType::order('name')->select();
-
-        View::assign([
-            'brands' => $brands,
-            'categories' => $categories,
-            'productTypes' => $productTypes,
-        ]);
-
-        return View::fetch('admin/product/create');
-    }
-    */
-
 
     public function getSpecialFields(Request $request)
     {
@@ -93,109 +96,71 @@ class ProductController extends BaseController
         
         return View::fetch('admin/product/special_fields_form', [
             'fields' => $fields,
-            'values' => [] // Valores vacíos para creación
+            'values' => []
         ]);
     }
 
-
-    public function save(Request $request)
+    public function save(Request $request): Redirect
     {
         $data = $request->post();
+        $cleanData = $data;
 
-        // Validación del formulario
-        $validate = new ProductFormValidator();
-        if (!$validate->check($data)) {
-            Session::flash('error', $validate->getError());
-            return redirect('/admin/product/create');
-        }
+        // 1. Validación del formulario
+        if (!$this->productValidator->check($data)) {
+            $error = $this->productValidator->getError();
+            $errorField = $error['code'];
+            $errorMessage = $error['msg'];
 
-        $file = $request->file('pic');
-
-        if ($file) {
-            try {
-                // Validación básica del archivo
-                $fileValidate = validate([
-                    'pic' => [
-                        'file', 
-                        'fileExt' => 'jpg,jpeg,png,gif,webp',
-                        'fileSize' => 5242880, // 5MB para imágenes grandes
-                    ]
-                ]);
-                
-                if (!$fileValidate->check(['pic' => $file])) {
-                    Session::flash('error', 'Error de validación de imagen: ' . $fileValidate->getError());
-                    return redirect('/admin/product/create');
-                }
-
-                // Validación avanzada de dimensiones
-                $tempPath = $file->getRealPath();
-                list($width, $height) = getimagesize($tempPath);
-                
-                // Validar que sea cuadrada
-                if ($width !== $height) {
-                    Session::flash('error', 'La imagen debe ser cuadrada (mismo ancho y alto)');
-                    return redirect('/admin/product/create');
-                }
-                
-                // Validar tamaño mínimo
-                $minSize = 1500;
-                if ($width < $minSize || $height < $minSize) {
-                    Session::flash('error', "La imagen debe ser de al menos {$minSize}x{$minSize} píxeles");
-                    return redirect('/admin/product/create');
-                }
-
-                // Verificar y crear directorios
-                $basePath = app()->getRootPath() . 'public/static/img/';
-                $topicPath = $basePath . 'product/';
-                
-                if (!is_dir($basePath)) mkdir($basePath, 0755, true);
-                if (!is_dir($topicPath)) mkdir($topicPath, 0755, true);
-                if (!is_writable($topicPath)) chmod($topicPath, 0755);
-
-                // Generar nombre único basado en ASIN
-                $extension = strtolower($file->getOriginalExtension());
-                $filename = $data['asin'] . '.' . $extension;
-                $originalPath = $topicPath . $filename;
-
-                // Mover el archivo original
-                $file->move($topicPath, $filename);
-
-                // Crear miniaturas en diferentes tamaños
-                $sizes = [
-                    'large' => [800, 800],      // Página de producto
-                    'medium' => [350, 350],     // Fichas de productos
-                    'small' => [35, 35],        // Listados admin
-                    'thumb' => [150, 150]       // Miniaturas generales
-                ];
-                
-                foreach ($sizes as $sizeName => $dimensions) {
-                    $sizeFilename = $sizeName . '_' . $filename;
-                    $sizePath = $topicPath . $sizeFilename;
-                    
-                    $image = Image::open($originalPath);
-                    $image->thumb($dimensions[0], $dimensions[1], Image::THUMB_CENTER)
-                          ->save($sizePath);
-                }
-
-                // Guardar solo el nombre del archivo original en la BD
-                $data['pic'] = $filename;
-
-            } catch (\Exception $e) {
-                Session::flash('error', 'Error al procesar la imagen: ' . $e->getMessage());
-                return redirect('/admin/product/create');
+            // Limpiar solo el campo con error
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
             }
+
+            return redirect((string) url('product_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
         }
 
-        // Guardar el producto en la base de datos
+        // 2. Procesar imagen y guardar producto
         try {
+            // Obtener archivo de imagen
+            $file = null;
+            if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
+                $file = $request->file('pic');
+            }
             
-            Product::create($data);
+            // Configurar ImageService para productos (1500px mínimo, cuadrada)
+            $this->imageService->setImageMinDimension(1500);
+            
+            // Definir path para imágenes de productos
+            $basePath = app()->getRootPath() . 'public/static/img/';
+            $productPath = $basePath . 'product/';
 
+            // Procesar imagen si se subió
+            if ($file) {
+                try {
+                    $data['pic'] = $this->imageService->processSquareImage(
+                        $file,
+                        $productPath,
+                        $data['name'], // Usar nombre del producto para el slug
+                        null
+                    );
+                } catch (RuntimeException $e) {
+                    return redirect((string) url('product_create'))
+                        ->with('old_data', $cleanData)
+                        ->with('error', $e->getMessage());
+                }
+            } else {
+                $data['pic'] = null;
+            }
+
+            // Crear el producto
+            $product = Product::create($data);
+            $productId = $product->id;
 
             // Guardar atributos especiales si existen
             $special = $request->post('special', []);
-            $productId = Product::getLastInsID(); // Obtener el ID del producto recién creado
-
             foreach ($special as $fieldId => $value) {
                 if (!empty($value)) {
                     ProductSpecialValue::create([
@@ -206,338 +171,189 @@ class ProductController extends BaseController
                 }
             }
 
+            return redirect((string) url('product_index'))->with('success', 'Producto creado correctamente.');
 
-
-            Session::flash('success', 'Producto creado correctamente.');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al guardar el producto: ' . $e->getMessage());
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('product_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', 'Error inesperado: ' . $e->getMessage());
         }
-
-        return redirect('/admin/product/index');
     }
 
-    /*
-    public function save(Request $request)
+    public function edit(int $id): string|Redirect
     {
-        $data = $request->post();
-
-        // Validación del formulario
-        $validate = new ProductFormValidator();
-        if (!$validate->check($data)) {
-            Session::flash('error', $validate->getError());
-            return redirect('/admin/product/create');
-        }
-
-        $file = $request->file('pic');
-
-        if ($file) {
-            try {
-                // Validación básica del archivo
-                $fileValidate = validate([
-                    'pic' => [
-                        'file', 
-                        'fileExt' => 'jpg,jpeg,png,gif,webp',
-                        'fileSize' => 5242880, // 5MB para imágenes grandes
-                    ]
-                ]);
-                
-                if (!$fileValidate->check(['pic' => $file])) {
-                    Session::flash('error', 'Error de validación de imagen: ' . $fileValidate->getError());
-                    return redirect('/admin/product/create');
-                }
-
-                // Validación avanzada de dimensiones
-                $tempPath = $file->getRealPath();
-                list($width, $height) = getimagesize($tempPath);
-                
-                // Validar que sea cuadrada
-                if ($width !== $height) {
-                    Session::flash('error', 'La imagen debe ser cuadrada (mismo ancho y alto)');
-                    return redirect('/admin/product/create');
-                }
-                
-                // Validar tamaño mínimo
-                $minSize = 1500;
-                if ($width < $minSize || $height < $minSize) {
-                    Session::flash('error', "La imagen debe ser de al menos {$minSize}x{$minSize} píxeles");
-                    return redirect('/admin/product/create');
-                }
-
-                // Verificar y crear directorios
-                $basePath = app()->getRootPath() . 'public/static/img/';
-                $topicPath = $basePath . 'product/';
-                
-                if (!is_dir($basePath)) mkdir($basePath, 0755, true);
-                if (!is_dir($topicPath)) mkdir($topicPath, 0755, true);
-                if (!is_writable($topicPath)) chmod($topicPath, 0755);
-
-                // Generar nombre único basado en ASIN
-                $extension = strtolower($file->getOriginalExtension());
-                $filename = $data['asin'] . '.' . $extension;
-                $originalPath = $topicPath . $filename;
-
-                // Mover el archivo original
-                $file->move($topicPath, $filename);
-
-                // Crear miniaturas en diferentes tamaños
-                $sizes = [
-                    'large' => [800, 800],      // Página de producto
-                    'medium' => [350, 350],     // Fichas de productos
-                    'small' => [35, 35],        // Listados admin
-                    'thumb' => [150, 150]       // Miniaturas generales
-                ];
-                
-                foreach ($sizes as $sizeName => $dimensions) {
-                    $sizeFilename = $sizeName . '_' . $filename;
-                    $sizePath = $topicPath . $sizeFilename;
-                    
-                    $image = Image::open($originalPath);
-                    $image->thumb($dimensions[0], $dimensions[1], Image::THUMB_CENTER)
-                          ->save($sizePath);
-                }
-
-                // Guardar solo el nombre del archivo original en la BD
-                $data['pic'] = $filename;
-
-            } catch (\Exception $e) {
-                Session::flash('error', 'Error al procesar la imagen: ' . $e->getMessage());
-                return redirect('/admin/product/create');
-            }
-        }
-
-        // Guardar el producto en la base de datos
-        try {
-            Product::create($data);
-            Session::flash('success', 'Producto creado correctamente.');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al guardar el producto: ' . $e->getMessage());
-        }
-
-        return redirect('/admin/product/index');
-    }
-    */
-
-    public function edit($id)
-    {
-
-
-        $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
 
-        $product = Product::with(['brand', 'category', 'productType'])->find($id);
-        $brands = Brand::order('brand_en')->select();
-        $categories = Category::order('txt_short')->select();
-        $productTypes = ProductType::order('name')->select();
+        try {
+            $product = Product::with(['brand', 'category', 'productType'])->findOrFail($id);
+            
+            $brands = Brand::order('brand_en')->select();
+            $categories = Category::order('txt_short')->select();
+            $productTypes = ProductType::order('name')->select();
 
-        //dump($product);
+            // Obtener campos especiales según el tipo de producto
+            $specialFields = ProductSpecialField::where('product_type_id', $product->product_type_id)->select();
+            $specialValues = ProductSpecialValue::where('product_id', $id)->column('value', 'special_field_id');
 
-        if (!$product) {
-            return View::fetch('error/404');
+            View::assign([
+                'product' => $product,
+                'brands' => $brands,
+                'categories' => $categories,
+                'productTypes' => $productTypes,
+                'specialFields' => $specialFields,
+                'specialValues' => $specialValues,
+                'old_data' => $oldData,
+                'error_field' => $errorField,
+                'error' => $errorMessage,
+            ]);
+
+            return View::fetch('admin/product/edit');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_index'))->with('error', 'Producto no encontrado.');
         }
-
-
-        //dump($product->product_type_id);
-        // Obtener campos especiales según el tipo de producto
-        $specialFields = ProductSpecialField::where('product_type_id', $product->product_type_id)->select();
-
-        //dump($specialFields);
-
-        // Obtener valores actuales del producto
-        $specialValues = ProductSpecialValue::where('product_id', $id)->column('value', 'special_field_id');
-
-        //dump($specialValues);
-
-
-        View::assign('product', $product);
-        View::assign('brands', $brands);
-        View::assign('categories', $categories);
-        View::assign('productTypes', $productTypes);
-
-
-        View::assign('specialFields', $specialFields);
-        View::assign('specialValues', $specialValues);
-
-        View::assign('success', $successMessage);
-        View::assign('error', $errorMessage);
-        return View::fetch('admin/product/edit');
     }
 
+    public function update(Request $request, int $id): Redirect
+    {
+        try {
+            $product = Product::findOrFail($id);
+            $data = $request->post();
+            $cleanData = $data;
 
-public function update(Request $request, $id)
-{
-    $data = $request->post();
+            // 1. Validación del formulario
+            if (!$this->productValidator->check($data)) {
+                $error = $this->productValidator->getError();
+                $errorField = $error['code'];
+                $errorMessage = $error['msg'];
 
-    $validate = new ProductFormValidator();
-    if (!$validate->check($data)) {
-        Session::flash('error', $validate->getError());
-        return redirect('/admin/product/edit?id=' . $id);
-    }
-
-    // Verificar archivo de forma segura sin usar file() directamente
-    $file = null;
-    if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
-        $file = $request->file('pic');
-    }
-
-    $product = Product::find($id);
-    $oldFilename = $product->pic;
-
-    try {
-        // Procesar imagen solo si se subió un archivo válido
-        if ($file) {
-            try {
-                // Validación básica del archivo
-                $fileValidate = validate([
-                    'pic' => [
-                        'file', 
-                        'fileExt' => 'jpg,jpeg,png,gif,webp',
-                        'fileSize' => 5242880,
-                    ]
-                ]);
-                
-                if (!$fileValidate->check(['pic' => $file])) {
-                    Session::flash('error', 'Error de validación de imagen: ' . $fileValidate->getError());
-                    return redirect('/admin/product/edit?id=' . $id);
+                if (isset($cleanData[$errorField])) {
+                    $cleanData[$errorField] = '';
                 }
 
-                // Validación avanzada de dimensiones
-                $tempPath = $file->getRealPath();
-                list($width, $height) = getimagesize($tempPath);
-                
-                if ($width !== $height) {
-                    Session::flash('error', 'La imagen debe ser cuadrada');
-                    return redirect('/admin/product/edit?id=' . $id);
-                }
-                
-                $minSize = 1500;
-                if ($width < $minSize || $height < $minSize) {
-                    Session::flash('error', "La imagen debe ser de al menos {$minSize}x{$minSize} píxeles");
-                    return redirect('/admin/product/edit?id=' . $id);
-                }
-
-                // Directorios
-                $basePath = app()->getRootPath() . 'public/static/img/';
-                $topicPath = $basePath . 'product/';
-                
-                if (!is_dir($topicPath)) {
-                    mkdir($topicPath, 0755, true);
-                }
-
-                // Generar nombre basado en ASIN
-                $extension = strtolower($file->getOriginalExtension());
-                $newFilename = $data['asin'] . '.' . $extension;
-                $originalPath = $topicPath . $newFilename;
-
-                // Eliminar imágenes antiguas si existen
-                if ($oldFilename) {
-                    $this->deleteProductImages($oldFilename, $topicPath);
-                }
-
-                // Mover nueva imagen
-                $file->move($topicPath, $newFilename);
-
-                // Crear miniaturas
-                $sizes = [
-                    'large' => [800, 800],
-                    'medium' => [350, 350],
-                    'small' => [35, 35],
-                    'thumb' => [150, 150]
-                ];
-                
-                foreach ($sizes as $sizeName => $dimensions) {
-                    $sizeFilename = $sizeName . '_' . $newFilename;
-                    $sizePath = $topicPath . $sizeFilename;
-                    
-                    $image = Image::open($originalPath);
-                    $image->thumb($dimensions[0], $dimensions[1], Image::THUMB_CENTER)
-                          ->save($sizePath);
-                }
-
-                $data['pic'] = $newFilename;
-
-            } catch (\Exception $e) {
-                Session::flash('error', 'Error al procesar la imagen: ' . $e->getMessage());
-                return redirect('/admin/product/edit?id=' . $id);
+                return redirect((string) url('product_edit', ['id' => $id]))
+                    ->with('old_data', $cleanData)
+                    ->with('error', $errorMessage)
+                    ->with('error_field', $errorField);
             }
-        } else {
-            // Si no se subió nueva imagen, mantener la existente
-            $data['pic'] = $oldFilename;
-        }
 
-        // Actualizar producto
-        Product::update($data, ['id' => $id]);
+            // Obtener archivo de imagen de forma segura
+            $file = null;
+            if (isset($_FILES['pic']) && $_FILES['pic']['error'] === UPLOAD_ERR_OK) {
+                $file = $request->file('pic');
+            }
+            
+            // Solo procesar imagen si se subió un archivo válido
+            if ($file) {
+                try {
+                    // Configurar ImageService para productos
+                    $this->imageService->setImageMinDimension(1500);
+                    $basePath = app()->getRootPath() . 'public/static/img/';
+                    $productPath = $basePath . 'product/';
 
-        // Guardar atributos especiales
-        $special = $request->post('special', []);
-        foreach ($special as $fieldId => $value) {
-            $existing = ProductSpecialValue::where([
-                'product_id' => $id,
-                'special_field_id' => $fieldId
-            ])->find();
-
-            if ($existing) {
-                $existing->value = $value;
-                $existing->save();
+                    $data['pic'] = $this->imageService->processSquareImage(
+                        $file,
+                        $productPath,
+                        $data['name'],
+                        $product->pic // Imagen anterior para eliminar
+                    );
+                } catch (RuntimeException $e) {
+                    return redirect((string) url('product_edit', ['id' => $id]))
+                        ->with('old_data', $cleanData)
+                        ->with('error', $e->getMessage());
+                }
             } else {
-                ProductSpecialValue::create([
+                // Si no se subió nueva imagen, mantener la existente
+                $data['pic'] = $product->pic;
+            }
+
+            // Actualizar producto
+            $product->save($data);
+
+            // Actualizar atributos especiales
+            $special = $request->post('special', []);
+            foreach ($special as $fieldId => $value) {
+                $existing = ProductSpecialValue::where([
                     'product_id' => $id,
-                    'special_field_id' => $fieldId,
-                    'value' => $value
-                ]);
+                    'special_field_id' => $fieldId
+                ])->find();
+
+                if ($existing) {
+                    if (!empty($value)) {
+                        $existing->value = $value;
+                        $existing->save();
+                    } else {
+                        $existing->delete();
+                    }
+                } elseif (!empty($value)) {
+                    ProductSpecialValue::create([
+                        'product_id' => $id,
+                        'special_field_id' => $fieldId,
+                        'value' => $value
+                    ]);
+                }
             }
-        }
 
-        Session::flash('success', 'Producto actualizado correctamente');
-        return redirect((string)url('product_index'));
+            return redirect((string) url('product_index'))->with('success', 'Producto actualizado correctamente.');
 
-    } catch (\Exception $e) {
-        Session::flash('error', 'Error al actualizar el producto: ' . $e->getMessage());
-        return redirect('/admin/product/edit?id=' . $id);
-    }
-}
-
-    /**
-     * Método auxiliar para eliminar imágenes antiguas
-     */
-    private function deleteProductImages($filename, $directory)
-    {
-        $filesToDelete = [
-            $directory . $filename,           // original
-            $directory . 'large_' . $filename,
-            $directory . 'medium_' . $filename,
-            $directory . 'small_' . $filename,
-            $directory . 'thumb_' . $filename
-        ];
-
-        foreach ($filesToDelete as $filePath) {
-            if (file_exists($filePath) && is_file($filePath)) {
-                unlink($filePath);
-            }
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_index'))->with('error', 'Producto no encontrado.');
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('product_edit', ['id' => $id]))
+                ->with('old_data', $cleanData)
+                ->with('error', 'Error inesperado: ' . $e->getMessage());
         }
     }
 
-
-    public function delete($id)
+    public function delete(int $id): Redirect
     {
         try {
-            Product::destroy($id);
-            return json(['status' => 'success', 'message' => 'Producto eliminado']);
-        } catch (\Exception $e) {
-            return json(['status' => 'error', 'message' => 'Error al eliminar el producto']);
+            $product = Product::findOrFail($id);
+            $product->delete();
+            return redirect((string) url('product_index'))->with('success', 'Producto eliminado correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_index'))->with('error', 'Producto no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('product_index'))->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
         }
     }
 
-    public function restore($id)
+    public function restore(int $id): Redirect
     {
         try {
-            $product = Product::onlyTrashed()->find($id);
-            if ($product) {
-                $product->restore();
-                return json(['status' => 'success', 'message' => 'Producto restaurado']);
+            $product = Product::onlyTrashed()->findOrFail($id);
+            $product->restore();
+            return redirect((string) url('product_index'))->with('success', 'Producto restaurado correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_index'))->with('error', 'Producto no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('product_index'))->with('error', 'Error al restaurar el producto: ' . $e->getMessage());
+        }
+    }
+
+    public function forceDelete(int $id): Redirect
+    {
+        try {
+            $product = Product::onlyTrashed()->findOrFail($id);
+            
+            // Eliminar imagen si existe
+            if ($product->pic) {
+                $basePath = app()->getRootPath() . 'public/static/img/';
+                $productPath = $basePath . 'product/';
+                $this->imageService->deleteBrandImage($product->pic, $productPath);
             }
-            return json(['status' => 'error', 'message' => 'Producto no encontrado']);
-        } catch (\Exception $e) {
-            return json(['status' => 'error', 'message' => 'Error al restaurar el producto']);
+            
+            $product->force()->delete();
+            return redirect((string) url('product_index'))->with('success', 'Producto eliminado permanentemente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_index'))->with('error', 'Producto no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('product_index'))->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
         }
     }
 }

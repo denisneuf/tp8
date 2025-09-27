@@ -129,6 +129,7 @@ Route::group('admin/product', function () {
     Route::post('delete', 'app\controller\admin\ProductController@delete')->pattern(['id' => '\d+'])->name('product_delete');
     Route::post('restore', 'app\controller\admin\ProductController@restore')->pattern(['id' => '\d+'])->name('product_restore');
     Route::get('get-special-fields', 'app\controller\admin\ProductController@getSpecialFields')->name('product_get_special_fields');
+    Route::post('force-delete', 'app\controller\admin\ProductController@forceDelete')->name('product_force_delete');
 })->middleware('admin')->middleware('adminmenu');
 
 

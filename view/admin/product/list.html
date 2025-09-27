@@ -2,85 +2,180 @@
 
 {block name="content"}
 
+    {if isset($success)}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Éxito:</strong> {$success}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
 
-{if isset($success)}
-    <div class="alert alert-info">{$success}</div>
-{/if}
+    {if isset($error)}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>Error:</strong> {$error}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {/if}
 
-{if isset($error)}
-    <div class="alert alert-danger">{$error}</div>
-{/if}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-cube me-2"></i>Listado de Productos
+            </h6>
+            <a href="{:url('product_create')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-plus-square me-2"></i>Crear Producto
+            </a>
+        </div>
 
-
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Img</th>
-                    <th>Asin</th>
-                    <th>Marca</th>
-                    <th>Categoría</th>
-                    <th>Tipo</th>
-                    <th>Precio</th>
-                    <!--
-                    <th>Stock</th>
-                    <th>Visible</th>
-                    <th>Disponible</th>
-                -->
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {volist name="products" id="product"}
-                <tr>
-                    <td>{$product.id}</td>
-                    <td><img src="/static/img/product/small_{$product->pic}" alt="Nombre del producto" width="35" height="35" loading="lazy"></td>
-                    <td>{$product.asin}</td>
-                    <td>{$product.brand.brand_en}</td>
-                    <td>{$product.category.txt_short}</td>
-                    <td>{$product.product_type.name}</td>
-                    <td>{$product.price}</td>
-                    <!--
-                    <td>{$product.stock}</td>
-                    <td>{if $product.visible}✔️{else}❌{/if}</td>
-                    <td>{if $product.available}✔️{else}❌{/if}</td>
-                -->
-                    <td>
-                        <a href="{:url('product_edit', ['id' => $product.id])}" class="btn btn-sm btn-warning">Editar</a>
-                        {if $product.delete_time}
-                            <form method="post" action="{:url('product_restore', ['id' => $product.id])}" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-success">Restaurar</button>
-                            </form>
-                        {else}
-                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{$product.id}">Eliminar</button>
-                        {/if}
-                    </td>
-                </tr>
-
-                <!-- Modal de confirmación -->
-                <div class="modal fade" id="deleteModal{$product.id}" tabindex="-1" role="dialog">
-                    <div class="modal-dialog" role="document">
-                        <form method="post" action="{:url('product_delete', ['id' => $product.id])}">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Confirmar eliminación</h5>
-                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                </div>
-                                <div class="modal-body">
-                                    ¿Estás seguro de que deseas eliminar el producto <strong>{$product.name}</strong>?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                </div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>ID</th>
+                        <th>ASIN</th>
+                        <th>Nombre</th>
+                        <th>Marca</th>
+                        <!--<th>Categoría</th>-->
+                        <th>Tipo</th>
+                        <th>Precio</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="products" id="product"}
+                    <tr>
+                        <td>
+                            {if $product.pic}
+                            <img src="/static/img/product/thumbnails/{$product.pic ? str_replace('.', '_sm.', $product.pic) : ''}" 
+                                 alt="{$product.name}" 
+                                 class="img-thumbnail rounded"
+                                 width="40" 
+                                 height="40"
+                                 style="object-fit: cover;"
+                                 onerror="this.src='/static/img/placeholder.jpg'">
+                            {else}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="bi bi-image text-muted"></i>
                             </div>
-                        </form>
-                    </div>
-                </div>
-                {/volist}
-            </tbody>
-        </table>
+                            {/if}
+                        </td>
+                        <td><code>{$product.id}</code></td>
+                        <td>{$product.asin}</code></td>
+                        <!--<td>{$product.name}</td>-->
+                        <td>{:mb_strimwidth($product.name, 0, 20, '...')}</td>
+                        <td>{$product.brand.brand_en|default='-'}</td>
+                        <!--<td>{$product.category.txt_short|default='-'}</td>-->
+                        <td>{$product.product_type.name|default='-'}</td>
+                        <td>${$product.price|number_format=2}</td>
+                        <td>
+                            {if !$product.delete_time}
+                                <span class="badge bg-success">Activo</span>
+                            {else}
+                                <span class="badge bg-danger">Eliminado</span>
+                            {/if}
+                        </td>
+                        <td>
+                            {if !$product.delete_time}
+                                <a href="{:url('product_edit', ['id' => $product.id])}" 
+                                   class="btn btn-sm btn-primary lh-1 rounded-pill">Editar</a>
+                                <button type="button" class="btn btn-sm btn-danger lh-1 rounded-pill"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#actionModal"
+                                    data-id="{$product.id}"
+                                    data-action="delete">
+                                    Eliminar
+                                </button>
+                            {else}
+                                <button type="button" class="btn btn-sm btn-warning lh-1 rounded-pill"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#actionModal"
+                                    data-id="{$product.id}"
+                                    data-action="restore">
+                                    Restaurar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-dark lh-1 rounded-pill"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#actionModal"
+                                    data-id="{$product.id}"
+                                    data-action="forceDelete">
+                                    Eliminar
+                                </button>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
+    <div class="pagination">
+        {$products|raw}
+    </div>
 
+    <!-- Modal único para eliminar/restaurar/eliminar permanentemente -->
+    <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form method="post" id="actionForm">
+          <input type="hidden" name="__token__" value="{:token()}">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="actionModalLabel">Confirmar acción</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="actionModalBody">
+              ¿Estás seguro de que deseas realizar esta acción?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn" id="actionModalSubmit">Aceptar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-                {/block}
+{/block}
+
+{block name="scripts"}
+
+    <!-- Script para el modal -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const actionModal = document.getElementById('actionModal');
+        const form = actionModal.querySelector('#actionForm');
+        const title = actionModal.querySelector('#actionModalLabel');
+        const body = actionModal.querySelector('#actionModalBody');
+        const submitBtn = actionModal.querySelector('#actionModalSubmit');
+
+        actionModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const productId = button.getAttribute('data-id');
+            const actionType = button.getAttribute('data-action');
+
+            if (actionType === 'delete') {
+                title.textContent = 'Confirmar eliminación';
+                body.textContent = '¿Estás seguro de que deseas eliminar este producto? (Se puede restaurar después)';
+                submitBtn.textContent = 'Eliminar';
+                submitBtn.className = 'btn btn-danger';
+                form.setAttribute('action', `{:url('product_delete')}?id=${productId}`);
+            } else if (actionType === 'restore') {
+                title.textContent = 'Confirmar restauración';
+                body.textContent = '¿Estás seguro de que deseas restaurar este producto?';
+                submitBtn.textContent = 'Restaurar';
+                submitBtn.className = 'btn btn-warning';
+                form.setAttribute('action', `{:url('product_restore')}?id=${productId}`);
+            } else if (actionType === 'forceDelete') {
+                title.textContent = 'Confirmar eliminación permanente';
+                body.textContent = '⚠️ ADVERTENCIA: Esta acción NO se puede deshacer. ¿Estás seguro de que deseas eliminar permanentemente este producto?';
+                submitBtn.textContent = 'Eliminar';
+                submitBtn.className = 'btn btn-dark';
+                form.setAttribute('action', `{:url('product_force_delete')}?id=${productId}`);
+            }
+        });
+    });
+    </script>
+
+{/block}
