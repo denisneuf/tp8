@@ -13,9 +13,10 @@ class ProductFormValidator extends Validate
         'slug'            => 'require|max:255|unique:products',
         'sku'             => 'require|max:40|unique:products',
         'asin'            => 'require|max:10|unique:products',
-        'manufacturer'    => 'require|max:15|unique:products',
+        //'manufacturer'    => 'require|max:15|unique:products',
         'productcode'     => 'max:13|unique:products',
         'amazonlink'      => 'max:255|url|unique:products',
+        'manufacturer'    => 'require|max:15',
         'pic'             => 'max:255|unique:products',
         'price'           => 'float|egt:0',
         'description'     => 'max:65535',
@@ -69,6 +70,7 @@ class ProductFormValidator extends Validate
         
         'pic.unique'           => ['code' => 'pic', 'msg' => 'Esta imagen ya existe'],
         'pic.max'              => ['code' => 'pic', 'msg' => 'El nombre de la imagen no puede superar 255 caracteres'],
+        'pic.require'           => ['code' => 'pic', 'msg' => 'Sin Imagen no hay producto'],
         
         'price.float'          => ['code' => 'price', 'msg' => 'El precio debe ser un número decimal'],
         'price.egt'            => ['code' => 'price', 'msg' => 'El precio debe ser mayor o igual a 0'],
@@ -112,6 +114,7 @@ class ProductFormValidator extends Validate
     /**
      * Escena para actualización
      */
+    /*
     public function sceneUpdate($id)
     {
         return $this->only([
@@ -138,4 +141,39 @@ class ProductFormValidator extends Validate
         ->append('amazonlink', 'unique:products,amazonlink,' . $id)
         ->append('pic', 'unique:products,pic,' . $id);
     }
+    */
+
+
+    //Working
+    public function sceneUpdate(int $id)
+    {
+        // Filtramos los campos que queremos validar
+        $this->only([
+           'name', 'slug', 'sku', 'asin', 'manufacturer', 'productcode', 
+            'amazonlink', 'pic', 'price', 'description', 'stock', 'like', 'visible', 
+            'available', 'brand_id', 'category_id', 'product_type_id',
+            'title', 'meta_title', 'meta_description', 'meta_keywords',
+            'og_title', 'og_description', 'og_image', 'og_type'
+        ]);
+
+        // Quitamos las reglas base de page (que tenían unique sin id)
+        $this->removeRule(['page', 'slug', 'sku', 'asin', 'productcode', 'amazonlink']);
+
+        // Añadimos las reglas correctas para update
+        $this->rule([
+            //'page' => "require|max:100|unique:meta,page,{$id},id", //simple id is useless
+            'name' => "require|max:255|unique:products,name,{$id},id",
+            'slug' => "require|max:255|unique:products,slug,{$id},id",
+            'sku' => "require|max:40|unique:products,sku,{$id},id",
+            'asin' => "require|max:10|unique:products,asin,{$id},id",
+            'productcode' => "require|max:13|unique:products,productcode,{$id},id",
+            'amazonlink' => "require|max:255|unique:products,amazonlink,{$id},id",
+
+        ]);
+
+        return $this;
+    }
+
+
+
 }

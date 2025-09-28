@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Función para mostrar mensaje en el modal
     function showAlert(message) {
-        alertMessage.textContent = message;
+        alertMessage.innerHTML = message.replace(/\n/g, '<br>');
         alertModal.show();
     }
 
@@ -565,6 +565,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Auto-generar Amazon link desde el ASIN
+    const asinInput = document.getElementById('asin');
+    const amazonlinkInput = document.getElementById('amazonlink');
+    
+    if (asinInput && amazonlinkInput) {
+        asinInput.addEventListener('blur', function() {
+            if (this.value.trim() && !amazonlinkInput.value.trim()) {
+                const asin = this.value.trim();
+                const amazonLink = `https://amazon.es/${asin}?tag=leadtech21`;
+                amazonlinkInput.value = amazonLink;
+            }
+        });
+        
+        // También generar si el ASIN cambia y el link está vacío
+        asinInput.addEventListener('input', function() {
+            if (this.value.trim() && !amazonlinkInput.value.trim()) {
+                const asin = this.value.trim();
+                const amazonLink = `https://amazon.es/${asin}?tag=leadtech21`;
+                amazonlinkInput.value = amazonLink;
+            }
+        });
+    }
+    
     // Previsualización de imagen
     const picInput = document.getElementById('pic');
     
@@ -596,12 +619,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
         let isValid = true;
+        const tabsWithErrors = new Set();
         
         const requiredFields = form.querySelectorAll('[required]');
         requiredFields.forEach(field => {
             if (!field.value.trim()) {
                 isValid = false;
                 field.classList.add('is-invalid');
+                
+                // Encontrar en qué tab está este campo
+                const tabPane = field.closest('.tab-pane');
+                if (tabPane) {
+                    const tabId = tabPane.id;
+                    tabsWithErrors.add(tabId);
+                }
             } else {
                 field.classList.remove('is-invalid');
             }
@@ -609,7 +640,39 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!isValid) {
             e.preventDefault();
-            showAlert('Por favor, complete todos los campos obligatorios marcados con *.');
+            
+            // Activar el primer tab con errores
+            if (tabsWithErrors.size > 0) {
+                const firstTabId = Array.from(tabsWithErrors)[0];
+                const tabLink = document.querySelector(`[href="#${firstTabId}"]`);
+                if (tabLink) {
+                    const tab = new bootstrap.Tab(tabLink);
+                    tab.show();
+                }
+            }
+            
+            // Mensaje mejorado que indica dónde están los errores
+            let message = 'Por favor, complete todos los campos obligatorios marcados con *.';
+            
+            if (tabsWithErrors.size > 0) {
+                const tabNames = {
+                    'general': 'Información General',
+                    'attributes': 'Atributos Especiales', 
+                    'seo': 'SEO y Meta Tags'
+                };
+                
+                const errorTabs = Array.from(tabsWithErrors).map(tabId => tabNames[tabId] || tabId);
+                message += `\n\nCampos faltantes en: ${errorTabs.join(', ')}`;
+            }
+            
+            showAlert(message);
+            
+            // Scroll al primer error
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
         }
     });
 });
