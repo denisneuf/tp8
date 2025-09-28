@@ -45,6 +45,11 @@
                             <i class="bi bi-tags me-1"></i>Atributos Especiales
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#seo" role="tab">
+                            <i class="bi bi-search me-1"></i>SEO y Meta Tags
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="tab-content">
@@ -118,20 +123,22 @@
                                     <label for="asin" class="form-label">ASIN <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control {if isset($error_field) && $error_field == 'asin'}is-invalid{/if}" 
                                            name="asin" id="asin" required 
-                                           maxlength="50" value="{if isset($old_data.asin)}{$old_data.asin}{else}{$product.asin}{/if}">
+                                           maxlength="10" value="{if isset($old_data.asin)}{$old_data.asin}{else}{$product.asin}{/if}">
                                     {if isset($error_field) && $error_field == 'asin'}
                                         <div class="invalid-feedback">{$error}</div>
                                     {/if}
+                                    <div class="form-text">Máximo 10 caracteres.</div>
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="sku" class="form-label">SKU <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control {if isset($error_field) && $error_field == 'sku'}is-invalid{/if}" 
                                            name="sku" id="sku" required 
-                                           maxlength="100" value="{if isset($old_data.sku)}{$old_data.sku}{else}{$product.sku}{/if}">
+                                           maxlength="40" value="{if isset($old_data.sku)}{$old_data.sku}{else}{$product.sku}{/if}">
                                     {if isset($error_field) && $error_field == 'sku'}
                                         <div class="invalid-feedback">{$error}</div>
                                     {/if}
+                                    <div class="form-text">Máximo 40 caracteres.</div>
                                 </div>
                             </div>
                         </div>
@@ -144,20 +151,22 @@
                                     <label for="manufacturer" class="form-label">Fabricante <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control {if isset($error_field) && $error_field == 'manufacturer'}is-invalid{/if}" 
                                            name="manufacturer" id="manufacturer" required 
-                                           maxlength="255" value="{if isset($old_data.manufacturer)}{$old_data.manufacturer}{else}{$product.manufacturer}{/if}">
+                                           maxlength="15" value="{if isset($old_data.manufacturer)}{$old_data.manufacturer}{else}{$product.manufacturer}{/if}">
                                     {if isset($error_field) && $error_field == 'manufacturer'}
                                         <div class="invalid-feedback">{$error}</div>
                                     {/if}
+                                    <div class="form-text">Máximo 15 caracteres.</div>
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="productcode" class="form-label">Código de Producto</label>
                                     <input type="text" class="form-control {if isset($error_field) && $error_field == 'productcode'}is-invalid{/if}" 
                                            name="productcode" id="productcode" 
-                                           maxlength="100" value="{if isset($old_data.productcode)}{$old_data.productcode}{else}{$product.productcode}{/if}">
+                                           maxlength="13" value="{if isset($old_data.productcode)}{$old_data.productcode}{else}{$product.productcode}{/if}">
                                     {if isset($error_field) && $error_field == 'productcode'}
                                         <div class="invalid-feedback">{$error}</div>
                                     {/if}
+                                    <div class="form-text">Máximo 13 caracteres.</div>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -175,7 +184,7 @@
                                     <label for="amazonlink" class="form-label">Enlace de Amazon</label>
                                     <input type="url" class="form-control {if isset($error_field) && $error_field == 'amazonlink'}is-invalid{/if}" 
                                            name="amazonlink" id="amazonlink" 
-                                           maxlength="500" value="{if isset($old_data.amazonlink)}{$old_data.amazonlink}{else}{$product.amazonlink}{/if}">
+                                           maxlength="255" value="{if isset($old_data.amazonlink)}{$old_data.amazonlink}{else}{$product.amazonlink}{/if}">
                                     {if isset($error_field) && $error_field == 'amazonlink'}
                                         <div class="invalid-feedback">{$error}</div>
                                     {/if}
@@ -269,10 +278,11 @@
                                     <label for="description" class="form-label">Descripción del Producto</label>
                                     <textarea class="form-control {if isset($error_field) && $error_field == 'description'}is-invalid{/if}" 
                                               name="description" id="description" 
-                                              rows="4" maxlength="2000">{if isset($old_data.description)}{$old_data.description}{else}{$product.description}{/if}</textarea>
+                                              rows="4" maxlength="65535">{if isset($old_data.description)}{$old_data.description}{else}{$product.description}{/if}</textarea>
                                     {if isset($error_field) && $error_field == 'description'}
                                         <div class="invalid-feedback">{$error}</div>
                                     {/if}
+                                    <div class="form-text">Máximo 65,535 caracteres.</div>
                                 </div>
                                 
                                 <div class="row">
@@ -360,6 +370,188 @@
                             </div>
                         {/if}
                     </div>
+                    
+                    <!-- Tab: SEO y Meta Tags -->
+                    <div class="tab-pane fade" id="seo" role="tabpanel">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Configuración de metadatos para optimización SEO y redes sociales.
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="bi bi-globe me-2"></i>Meta Tags Básicos</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Título de Página</label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'title'}is-invalid{/if}" 
+                                           name="title" id="title" 
+                                           maxlength="70" value="{if isset($old_data.title)}{$old_data.title}{else}{$product.title}{/if}"
+                                           placeholder="Título optimizado para SEO">
+                                    {if isset($error_field) && $error_field == 'title'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">
+                                        <span id="titleCounter">
+                                            {if isset($old_data.title) && $old_data.title !== null}
+                                                {$old_data.title|mb_strlen}
+                                            {else}
+                                                {if $product.title !== null}
+                                                    {$product.title|mb_strlen}
+                                                {else}
+                                                    0
+                                                {/if}
+                                            {/if}
+                                        </span>/70 caracteres. Ideal: 50-60 caracteres.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="meta_title" class="form-label">Meta Título</label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'meta_title'}is-invalid{/if}" 
+                                           name="meta_title" id="meta_title" 
+                                           maxlength="70" value="{if isset($old_data.meta_title)}{$old_data.meta_title}{else}{$product.meta_title}{/if}"
+                                           placeholder="Meta título para buscadores">
+                                    {if isset($error_field) && $error_field == 'meta_title'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">
+                                        <span id="metaTitleCounter">
+                                            {if isset($old_data.meta_title) && $old_data.meta_title !== null}
+                                                {$old_data.meta_title|mb_strlen}
+                                            {else}
+                                                {if $product.meta_title !== null}
+                                                    {$product.meta_title|mb_strlen}
+                                                {else}
+                                                    0
+                                                {/if}
+                                            {/if}
+                                        </span>/70 caracteres. Aparece en los resultados de búsqueda.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="meta_description" class="form-label">Meta Descripción</label>
+                                    <textarea class="form-control {if isset($error_field) && $error_field == 'meta_description'}is-invalid{/if}" 
+                                              name="meta_description" id="meta_description" 
+                                              rows="3" maxlength="160"
+                                              placeholder="Descripción para resultados de búsqueda">{if isset($old_data.meta_description)}{$old_data.meta_description}{else}{$product.meta_description}{/if}</textarea>
+                                    {if isset($error_field) && $error_field == 'meta_description'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">
+                                        <span id="metaDescCounter">
+                                            {if isset($old_data.meta_description) && $old_data.meta_description !== null}
+                                                {$old_data.meta_description|mb_strlen}
+                                            {else}
+                                                {if $product.meta_description !== null}
+                                                    {$product.meta_description|mb_strlen}
+                                                {else}
+                                                    0
+                                                {/if}
+                                            {/if}
+                                        </span>/160 caracteres. Descripción en los resultados de Google.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="meta_keywords" class="form-label">Palabras Clave</label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'meta_keywords'}is-invalid{/if}" 
+                                           name="meta_keywords" id="meta_keywords" 
+                                           maxlength="255" value="{if isset($old_data.meta_keywords)}{$old_data.meta_keywords}{else}{$product.meta_keywords}{/if}"
+                                           placeholder="keyword1, keyword2, keyword3">
+                                    {if isset($error_field) && $error_field == 'meta_keywords'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Separadas por comas. Máximo 255 caracteres.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3"><i class="bi bi-share me-2"></i>Open Graph (Redes Sociales)</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="og_title" class="form-label">OG Title</label>
+                                    <input type="text" class="form-control {if isset($error_field) && $error_field == 'og_title'}is-invalid{/if}" 
+                                           name="og_title" id="og_title" 
+                                           maxlength="70" value="{if isset($old_data.og_title)}{$old_data.og_title}{else}{$product.og_title}{/if}"
+                                           placeholder="Título para compartir en redes">
+                                    {if isset($error_field) && $error_field == 'og_title'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">
+                                        <span id="ogTitleCounter">
+                                            {if isset($old_data.og_title) && $old_data.og_title !== null}
+                                                {$old_data.og_title|mb_strlen}
+                                            {else}
+                                                {if $product.og_title !== null}
+                                                    {$product.og_title|mb_strlen}
+                                                {else}
+                                                    0
+                                                {/if}
+                                            {/if}
+                                        </span>/70 caracteres. Título para Facebook, Twitter, etc.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="og_description" class="form-label">OG Description</label>
+                                    <textarea class="form-control {if isset($error_field) && $error_field == 'og_description'}is-invalid{/if}" 
+                                              name="og_description" id="og_description" 
+                                              rows="3" maxlength="160"
+                                              placeholder="Descripción para compartir en redes">{if isset($old_data.og_description)}{$old_data.og_description}{else}{$product.og_description}{/if}</textarea>
+                                    {if isset($error_field) && $error_field == 'og_description'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">
+                                        <span id="ogDescCounter">
+                                            {if isset($old_data.og_description) && $old_data.og_description !== null}
+                                                {$old_data.og_description|mb_strlen}
+                                            {else}
+                                                {if $product.og_description !== null}
+                                                    {$product.og_description|mb_strlen}
+                                                {else}
+                                                    0
+                                                {/if}
+                                            {/if}
+                                        </span>/160 caracteres. Descripción para redes sociales.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="og_image" class="form-label">OG Image URL</label>
+                                    <input type="url" class="form-control {if isset($error_field) && $error_field == 'og_image'}is-invalid{/if}" 
+                                           name="og_image" id="og_image" 
+                                           maxlength="255" value="{if isset($old_data.og_image)}{$old_data.og_image}{else}{$product.og_image}{/if}"
+                                           placeholder="https://ejemplo.com/imagen.jpg">
+                                    {if isset($error_field) && $error_field == 'og_image'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">URL de la imagen que se mostrará al compartir. Tamaño recomendado: 1200×630px.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="og_type" class="form-label">OG Type</label>
+                                    <select class="form-control {if isset($error_field) && $error_field == 'og_type'}is-invalid{/if}" 
+                                            name="og_type" id="og_type">
+                                        <option value="">Selecciona un tipo</option>
+                                        <option value="product" {if isset($old_data.og_type) && $old_data.og_type == 'product'}selected{else}{if $product.og_type == 'product'}selected{/if}{/if}>Producto</option>
+                                        <option value="article" {if isset($old_data.og_type) && $old_data.og_type == 'article'}selected{else}{if $product.og_type == 'article'}selected{/if}{/if}>Artículo</option>
+                                        <option value="website" {if isset($old_data.og_type) && $old_data.og_type == 'website'}selected{else}{if $product.og_type == 'website'}selected{/if}{/if}>Sitio Web</option>
+                                    </select>
+                                    {if isset($error_field) && $error_field == 'og_type'}
+                                        <div class="invalid-feedback">{$error}</div>
+                                    {/if}
+                                    <div class="form-text">Tipo de contenido para Open Graph.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            <strong>Consejo:</strong> Si dejas vacíos los campos de SEO, se generarán automáticamente a partir de la información básica del producto.
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Información de auditoría -->
@@ -393,37 +585,29 @@
         </div>
     </div>
 
-
-
-
-
-
-<!-- Modal de aviso -->
-<div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-warning text-dark">
-        <h5 class="modal-title"><i class="bi bi-exclamation-circle me-2"></i>Aviso</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <p id="alertMessage">Mensaje de aviso...</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+    <!-- Modal de aviso -->
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title"><i class="bi bi-exclamation-circle me-2"></i>Aviso</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <p id="alertMessage">Mensaje de aviso...</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
 
 {/block}
 
 {block name="scripts"}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-
-
     // Obtener elementos del modal de aviso
     const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
     const alertMessage = document.getElementById('alertMessage');
@@ -434,6 +618,35 @@ document.addEventListener('DOMContentLoaded', function() {
         alertModal.show();
     }
 
+    // Contadores de caracteres para campos SEO
+    const counters = {
+        'title': 'titleCounter',
+        'meta_title': 'metaTitleCounter',
+        'meta_description': 'metaDescCounter',
+        'og_title': 'ogTitleCounter',
+        'og_description': 'ogDescCounter'
+    };
+
+    // Inicializar contadores
+    Object.keys(counters).forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        const counter = document.getElementById(counters[fieldId]);
+        
+        if (field && counter) {
+            // El contador ya viene con el valor inicial desde el servidor
+            // Solo necesitamos el event listener para actualizaciones en tiempo real
+            field.addEventListener('input', function() {
+                counter.textContent = this.value.length;
+                
+                // Cambiar color si se excede el límite recomendado
+                if (this.value.length > 60 && fieldId.includes('title')) {
+                    counter.classList.add('text-warning');
+                } else {
+                    counter.classList.remove('text-warning');
+                }
+            });
+        }
+    });
 
     // Previsualización de imagen
     const picInput = document.getElementById('pic');
@@ -495,7 +708,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!isValid) {
             e.preventDefault();
-            //alert('Por favor, complete todos los campos obligatorios marcados con *.');
             showAlert('Por favor, complete todos los campos obligatorios marcados con *.');
         }
     });

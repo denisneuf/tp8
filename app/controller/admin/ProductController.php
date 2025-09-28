@@ -224,7 +224,8 @@ class ProductController extends BaseController
             $cleanData = $data;
 
             // 1. Validación del formulario
-            if (!$this->productValidator->check($data)) {
+            //if (!$this->productValidator->check($data)) {
+            if (!$this->productValidator->sceneUpdate($id)->check($data)) {
                 $error = $this->productValidator->getError();
                 $errorField = $error['code'];
                 $errorMessage = $error['msg'];

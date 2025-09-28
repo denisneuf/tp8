@@ -22,21 +22,21 @@ class MetaFormValidator extends Validate
     ];
 
     protected $message = [
-        'page.require'        => 'El campo página es obligatorio',
-        'page.max'            => 'El campo página no puede superar 100 caracteres',
-        'page.unique'         => 'Ya existe una meta para esta página',
-        'title.require'       => 'El título es obligatorio',
-        'title.max'           => 'El título no puede superar 70 caracteres',
-        'metatitle.max'       => 'El metatitle no puede superar 70 caracteres',
-        'description.max'     => 'La descripción no puede superar 160 caracteres',
-        'keywords.max'        => 'Las keywords no pueden superar 255 caracteres',
+        'page.require'        => ['code' => 'page', 'msg' => 'El campo página es obligatorio'],
+        'page.max'            => ['code' => 'page', 'msg' => 'El campo página no puede superar 100 caracteres'],
+        'page.unique'         => ['code' => 'page', 'msg' => 'Ya existe una meta para esta página'],
+        'title.require'       => ['code' => 'title', 'msg' => 'El título es obligatorio'],
+        'title.max'           => ['code' => 'title', 'msg' => 'El título no puede superar 70 caracteres'],
+        'metatitle.max'       => ['code' => 'metatitle', 'msg' => 'El metatitle no puede superar 70 caracteres'],
+        'description.max'     => ['code' => 'description', 'msg' => 'La descripción no puede superar 160 caracteres'],
+        'keywords.max'        => ['code' => 'keywords', 'msg' => 'Las keywords no pueden superar 255 caracteres'],
         
         // Open Graph messages
-        'og_title.max'        => 'El título Open Graph no puede superar 70 caracteres',
-        'og_description.max'  => 'La descripción Open Graph no puede superar 160 caracteres',
-        'og_image.max'        => 'La URL de la imagen Open Graph no puede superar 255 caracteres',
-        'og_image.url'        => 'La imagen Open Graph debe ser una URL válida',
-        'og_type.max'         => 'El tipo Open Graph no puede superar 50 caracteres',
+        'og_title.max'        => ['code' => 'og_title', 'msg' => 'El título Open Graph no puede superar 70 caracteres'],
+        'og_description.max'  => ['code' => 'og_description', 'msg' => 'La descripción Open Graph no puede superar 160 caracteres'],
+        'og_image.max'        => ['code' => 'og_image', 'msg' => 'La URL de la imagen Open Graph no puede superar 255 caracteres'],
+        'og_image.url'        => ['code' => 'og_image', 'msg' => 'La imagen Open Graph debe ser una URL válida'],
+        'og_type.max'         => ['code' => 'og_type', 'msg' => 'El tipo Open Graph no puede superar 50 caracteres'],
     ];
 
     /**
