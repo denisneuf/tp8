@@ -57,7 +57,8 @@ class MetaFormValidator extends Validate
 
         // Añadimos las reglas correctas para update
         $this->rule([
-            'page' => "require|max:100|unique:meta,page,{$id},id",
+            //'page' => "require|max:100|unique:meta,page,{$id},id", //simple id is useless
+            'page' => "require|max:100|unique:meta,page,{$id}",
         ]);
 
         return $this;
