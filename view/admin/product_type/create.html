@@ -1,65 +1,283 @@
-
 {extend name="admin/layout" /}
 
 {block name="content"}
-<h2>Crear tipo de producto</h2>
 
-{if isset($error)}
-    <div class="alert alert-danger">{$error}</div>
-{/if}
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
-<form action="{:url('product_type_store')}" method="post">
-    {:token_field()}
+    {if isset($success)}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Éxito:</strong> {$success}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
-    <div class="mb-3">
-        <label for="name" class="form-label">Nombre</label>
-        <input type="text" class="form-control" name="name" required>
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-tags me-2"></i>Crear Nuevo Tipo de Producto
+            </h6>
+            <a href="{:url('product_type_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{:url('product_type_save')}" method="post" novalidate>
+                {:token_field()}
+                
+                <!-- Sección: Información Básica -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'name'}is-invalid{/if}" 
+                                   name="name" id="name" required 
+                                   maxlength="100" value="{if isset($old_data.name)}{$old_data.name}{/if}"
+                                   placeholder="Ej: Laptops, Smartphones, Accesorios">
+                            {if isset($error_field) && $error_field == 'name'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Nombre descriptivo del tipo de producto.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'slug'}is-invalid{/if}" 
+                                   name="slug" id="slug" required 
+                                   maxlength="100" value="{if isset($old_data.slug)}{$old_data.slug}{/if}"
+                                   placeholder="Ej: laptops, smartphones, accesorios">
+                            {if isset($error_field) && $error_field == 'slug'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Solo letras, números y guiones. Usado en URLs.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bs_icon" class="form-label">Icono Bootstrap</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'bs_icon'}is-invalid{/if}" 
+                                   name="bs_icon" id="bs_icon" 
+                                   maxlength="50" value="{if isset($old_data.bs_icon)}{$old_data.bs_icon}{/if}"
+                                   placeholder="Ej: laptop, phone, headset">
+                            {if isset($error_field) && $error_field == 'bs_icon'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Nombres de iconos de <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-image me-2"></i>Imágenes y Visibilidad</h5>
+                        
+                        <div class="mb-3">
+                            <label for="pic" class="form-label">Imagen URL</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'pic'}is-invalid{/if}" 
+                                   name="pic" id="pic" 
+                                   maxlength="255" value="{if isset($old_data.pic)}{$old_data.pic}{/if}"
+                                   placeholder="https://ejemplo.com/imagen.jpg">
+                            {if isset($error_field) && $error_field == 'pic'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. URL de la imagen representativa.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bg" class="form-label">Fondo URL</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'bg'}is-invalid{/if}" 
+                                   name="bg" id="bg" 
+                                   maxlength="255" value="{if isset($old_data.bg)}{$old_data.bg}{/if}"
+                                   placeholder="https://ejemplo.com/fondo.jpg">
+                            {if isset($error_field) && $error_field == 'bg'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. URL de imagen de fondo.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="visible" class="form-label">Visible</label>
+                            <select class="form-select {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                    name="visible" id="visible">
+                                <option value="1" {if isset($old_data.visible) && $old_data.visible == 1}selected{/if}>Sí</option>
+                                <option value="0" {if isset($old_data.visible) && $old_data.visible == 0}selected{/if}>No</option>
+                            </select>
+                            {if isset($error_field) && $error_field == 'visible'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Determina si el tipo de producto es visible en el catálogo.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección: Textos y Descripción -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-text-paragraph me-2"></i>Textos y Descripción</h5>
+                        
+                        <div class="mb-3">
+                            <label for="txt_short" class="form-label">Texto Corto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'txt_short'}is-invalid{/if}" 
+                                   name="txt_short" id="txt_short" required 
+                                   maxlength="255" value="{if isset($old_data.txt_short)}{$old_data.txt_short}{/if}"
+                                   placeholder="Descripción breve del tipo de producto">
+                            {if isset($error_field) && $error_field == 'txt_short'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. Descripción breve que aparece en listados.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="txt_long" class="form-label">Texto Largo</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'txt_long'}is-invalid{/if}" 
+                                      name="txt_long" id="txt_long" 
+                                      rows="4" maxlength="65535" 
+                                      placeholder="Descripción extensa del tipo de producto">{if isset($old_data.txt_long)}{$old_data.txt_long}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'txt_long'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">
+                                Máximo 65,535 caracteres. 
+                                <span id="txtLongCount">
+                                    {if isset($old_data.txt_long)}
+                                        {$old_data.txt_long|mb_strlen}
+                                    {else /}
+                                        0
+                                    {/if}
+                                </span> caracteres usados.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'description'}is-invalid{/if}" 
+                                      name="description" id="description" 
+                                      rows="3" maxlength="65535" 
+                                      placeholder="Información adicional sobre el tipo de producto">{if isset($old_data.description)}{$old_data.description}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'description'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">
+                                Máximo 65,535 caracteres. 
+                                <span id="descriptionCount">
+                                    {if isset($old_data.description)}
+                                        {$old_data.description|mb_strlen}
+                                    {else /}
+                                        0
+                                    {/if}
+                                </span> caracteres usados.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Crear Tipo de Producto
+                    </button>
+                    <a href="{:url('product_type_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label for="slug" class="form-label">Slug</label>
-        <input type="text" class="form-control" name="slug" required>
-    </div>
+{/block}
 
-    <div class="mb-3">
-        <label for="bs_icon" class="form-label">Icono Bootstrap</label>
-        <input type="text" class="form-control" name="bs_icon" placeholder="Ej: laptop">
-    </div>
-
-    <div class="mb-3">
-        <label for="txt_short" class="form-label">Texto corto</label>
-        <input type="text" class="form-control" name="txt_short" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="txt_long" class="form-label">Texto largo</label>
-        <input type="text" class="form-control" name="txt_long" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="description" class="form-label">Descripción</label>
-        <textarea class="form-control" name="description" rows="3"></textarea>
-    </div>
-
-    <div class="mb-3">
-        <label for="pic" class="form-label">Imagen</label>
-        <input type="text" class="form-control" name="pic">
-    </div>
-
-    <div class="mb-3">
-        <label for="bg" class="form-label">Fondo</label>
-        <input type="text" class="form-control" name="bg">
-    </div>
-
-    <div class="mb-3">
-        <label for="visible" class="form-label">Visible</label>
-        <select class="form-select" name="visible">
-            <option value="1">Sí</option>
-            <option value="0">No</option>
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-success">Crear tipo</button>
-    <a href="{:url('product_type_index')}" class="btn btn-secondary">Cancelar</a>
-</form>
+{block name="scripts"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contador de caracteres para txt_long
+    const txtLongTextarea = document.getElementById('txt_long');
+    const txtLongCount = document.getElementById('txtLongCount');
+    
+    if (txtLongTextarea && txtLongCount) {
+        // Actualizar contador al cargar la página
+        txtLongCount.textContent = txtLongTextarea.value.length;
+        
+        // Actualizar contador mientras se escribe
+        txtLongTextarea.addEventListener('input', function() {
+            txtLongCount.textContent = this.value.length;
+        });
+    }
+    
+    // Contador de caracteres para description
+    const descriptionTextarea = document.getElementById('description');
+    const descriptionCount = document.getElementById('descriptionCount');
+    
+    if (descriptionTextarea && descriptionCount) {
+        // Actualizar contador al cargar la página
+        descriptionCount.textContent = descriptionTextarea.value.length;
+        
+        // Actualizar contador mientras se escribe
+        descriptionTextarea.addEventListener('input', function() {
+            descriptionCount.textContent = this.value.length;
+        });
+    }
+    
+    // Auto-generar slug desde el nombre
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    
+    if (nameInput && slugInput) {
+        nameInput.addEventListener('blur', function() {
+            // Solo generar slug si está vacío
+            if (!slugInput.value.trim()) {
+                const generatedSlug = this.value
+                    .toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+                slugInput.value = generatedSlug;
+            }
+        });
+    }
+    
+    // Validación básica del formulario
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar campos requeridos
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+                
+                // Crear mensaje de error si no existe
+                if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'Este campo es obligatorio.';
+                    field.parentNode.insertBefore(errorDiv, field.nextSibling);
+                }
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            // Scroll al primer error
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+});
+</script>
 {/block}

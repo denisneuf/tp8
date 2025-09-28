@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace app\controller\admin;
@@ -8,6 +7,12 @@ use app\BaseController;
 use think\facade\View;
 use think\facade\Session;
 use think\Request;
+use think\response\Redirect;
+use think\db\exception\ModelNotFoundException;
+use think\db\exception\DataNotFoundException;
+use RuntimeException;
+use InvalidArgumentException;
+use Exception;
 use app\model\ProductType;
 use app\model\ProductSpecialField;
 use app\model\ProductSpecialValue;
@@ -16,71 +21,239 @@ use app\validate\ProductTypeSpecialFieldValidator;
 
 class ProductTypeController extends BaseController
 {
-    public function index()
+    /**
+     * @var ProductTypeFormValidator
+     */
+    private ProductTypeFormValidator $productTypeValidator;
+
+    /**
+     * @var ProductTypeSpecialFieldValidator
+     */
+    private ProductTypeSpecialFieldValidator $specialFieldValidator;
+
+    /**
+     * Inicializa el controlador
+     */
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->productTypeValidator = app(ProductTypeFormValidator::class);
+        $this->specialFieldValidator = app(ProductTypeSpecialFieldValidator::class);
+    }
+
+    /**
+     * Muestra el listado de tipos de producto con paginación
+     */
+    public function index(): string
     {
         $successMessage = Session::get('success');
         $errorMessage = Session::get('error');
 
-        $productTypes = ProductType::withTrashed()->order('id desc')->paginate([
+        $productTypes = ProductType::withTrashed()->order('id', 'desc')->paginate([
             'list_rows' => 10,
             'query'     => request()->param(),
         ]);
 
-        return View::fetch('admin/product_type/list', [
+        View::assign([
             'productTypes' => $productTypes,
-            'success'      => $successMessage,
-            'error'        => $errorMessage,
+            'success' => $successMessage,
+            'error' => $errorMessage,
         ]);
+
+        return View::fetch('admin/product_type/list');
     }
 
-    public function create()
+    /**
+     * Muestra el formulario para crear un nuevo tipo de producto
+     */
+    public function create(): string
     {
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
+
+        View::assign([
+            'old_data' => $oldData,
+            'error_field' => $errorField,
+            'success' => $successMessage,
+            'error' => $errorMessage,
+        ]);
+
         return View::fetch('admin/product_type/create');
     }
 
-    public function updateField(Request $request, int $id)
-{
-    $field = ProductSpecialField::findOrFail($id);
-    $data = $request->post();
-    
-    // Validar primero que el campo existe
-    if (!$field) {
-        return redirect('/admin/product_type/index')
-            ->with('error', 'El campo no existe');
-    }
-
-    $validate = new ProductTypeSpecialFieldValidator();
-    
-    // Usar la escena de update (quita validación unique)
-    if (!$validate->scene('update')->check($data)) {
-        return redirect('/admin/product_type/edit?id=' . $field->product_type_id)
-            ->with('error', $validate->getError());
-    }
-
-    try {
-        $field->name = $data['name'];
-        $field->slug = $data['slug'];
-        $field->data_type = $data['data_type'];
-        $field->unit = $data['unit'] ?? null;
-        $field->required = isset($data['required']);
-        $field->save();
-
-        Session::flash('success', 'Campo actualizado correctamente.');
-    } catch (\Exception $e) {
-        Session::flash('error', 'Error al actualizar el campo: ' . $e->getMessage());
-    }
-
-    return redirect('/admin/product_type/edit?id=' . $field->product_type_id);
-}
-
-    /*
-    public function updateField(Request $request, int $id)
+    /**
+     * Guarda un nuevo tipo de producto en la base de datos
+     */
+    public function save(Request $request): Redirect
     {
-        $field = ProductSpecialField::findOrFail($id);
-        $productTypeId = $request->post('product_type_id');
         $data = $request->post();
+        $cleanData = $data;
+
+        // 1. PRIMERO validar (FUERA del try-catch)
+        if (!$this->productTypeValidator->check($data)) {
+            $error = $this->productTypeValidator->getError();
+            $errorField = $error['code'] ?? 'unknown';
+            $errorMessage = $error['msg'] ?? $error;
+
+            // Limpiar solo el campo con error
+            if (isset($cleanData[$errorField])) {
+                $cleanData[$errorField] = '';
+            }
+
+            return redirect((string) url('product_type_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', $errorMessage)
+                ->with('error_field', $errorField);
+        }
+
+        // 2. LUEGO procesar guardado (DENTRO del try-catch)
+        try {
+            ProductType::create($data);
+            return redirect((string) url('product_type_index'))->with('success', 'Tipo de producto creado correctamente.');
+
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('product_type_create'))
+                ->with('old_data', $cleanData)
+                ->with('error', 'Error al guardar el tipo de producto: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Muestra el formulario para editar un tipo de producto existente
+     */
+    public function edit(int $id): string|Redirect
+    {
+        $successMessage = Session::get('success');
+        $errorMessage = Session::get('error');
+        $oldData = Session::get('old_data');
+        $errorField = Session::get('error_field');
 
         try {
+            $productType = ProductType::with('specialFields')->findOrFail($id);
+            
+            View::assign([
+                'productType' => $productType,
+                'old_data' => $oldData,
+                'error_field' => $errorField,
+                'success' => $successMessage,
+                'error' => $errorMessage,
+            ]);
+
+            return View::fetch('admin/product_type/edit');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Tipo de producto no encontrado.');
+        }
+    }
+
+    /**
+     * Actualiza un tipo de producto existente en la base de datos
+     */
+    public function update(Request $request, int $id): Redirect
+    {
+        try {
+            $productType = ProductType::findOrFail($id);
+            $data = $request->post();
+            $cleanData = $data;
+
+            // 1. PRIMERO validar (FUERA del try-catch)
+            if (!$this->productTypeValidator->sceneUpdate($id)->check($data)) {
+                $error = $this->productTypeValidator->getError();
+                $errorField = $error['code'] ?? 'unknown';
+                $errorMessage = $error['msg'] ?? $error;
+
+                // Limpiar solo el campo con error
+                if (isset($cleanData[$errorField])) {
+                    $cleanData[$errorField] = '';
+                }
+
+                return redirect((string) url('product_type_edit', ['id' => $id]))
+                    ->with('old_data', $cleanData)
+                    ->with('error', $errorMessage)
+                    ->with('error_field', $errorField);
+            }
+
+            // 2. LUEGO procesar actualización
+            $productType->save($data);
+            return redirect((string) url('product_type_index'))->with('success', 'Tipo de producto actualizado correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Tipo de producto no encontrado.');
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('product_type_edit', ['id' => $id]))
+                ->with('old_data', $cleanData ?? [])
+                ->with('error', 'Error al actualizar el tipo de producto: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Añade un nuevo campo especializado a un tipo de producto
+     */
+    public function addField(Request $request, int $id): Redirect
+    {
+        $data = $request->post();
+        $cleanData = $data;
+
+        try {
+            // Validar que el tipo de producto existe
+            $productType = ProductType::findOrFail($id);
+
+            // 1. PRIMERO validar el campo especializado
+            if (!$this->specialFieldValidator->check($data)) {
+                $error = $this->specialFieldValidator->getError();
+                $errorField = $error['code'] ?? 'unknown';
+                $errorMessage = $error['msg'] ?? $error;
+
+                return redirect((string) url('product_type_edit', ['id' => $id]))
+                    ->with('error', $errorMessage);
+            }
+
+            // 2. LUEGO crear el campo
+            $field = new ProductSpecialField();
+            $field->name = $data['name'];
+            $field->slug = $data['slug'];
+            $field->data_type = $data['data_type'];
+            $field->unit = $data['unit'] ?? null;
+            $field->required = isset($data['required']);
+            $field->product_type_id = $id;
+            $field->save();
+
+            return redirect((string) url('product_type_edit', ['id' => $id]))
+                ->with('success', 'Campo especializado añadido correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Tipo de producto no encontrado.');
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('product_type_edit', ['id' => $id]))
+                ->with('error', 'Error al añadir el campo: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Actualiza un campo especializado existente
+     */
+    public function updateField(Request $request, int $id): Redirect
+    {
+        $data = $request->post();
+        $cleanData = $data;
+
+        try {
+            $field = ProductSpecialField::findOrFail($id);
+
+            // 1. PRIMERO validar (usando escena update para quitar unique)
+            //if (!$this->specialFieldValidator->scene('update')->check($data)) {
+            if (!$this->specialFieldValidator->sceneUpdate($id)->check($data)) {
+                $error = $this->specialFieldValidator->getError();
+                $errorField = $error['code'] ?? 'unknown';
+                $errorMessage = $error['msg'] ?? $error;
+
+                return redirect((string) url('product_type_edit', ['id' => $field->product_type_id]))
+                    ->with('error', $errorMessage);
+            }
+
+            // 2. LUEGO actualizar el campo
             $field->name = $data['name'];
             $field->slug = $data['slug'];
             $field->data_type = $data['data_type'];
@@ -88,191 +261,74 @@ class ProductTypeController extends BaseController
             $field->required = isset($data['required']);
             $field->save();
 
-            Session::flash('success', 'Campo actualizado correctamente.');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al actualizar el campo: ' . $e->getMessage());
+            return redirect((string) url('product_type_edit', ['id' => $field->product_type_id]))
+                ->with('success', 'Campo actualizado correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Campo no encontrado.');
+        } catch (RuntimeException | InvalidArgumentException | Exception $e) {
+            return redirect((string) url('product_type_edit', ['id' => $field->product_type_id ?? $id]))
+                ->with('error', 'Error al actualizar el campo: ' . $e->getMessage());
         }
-
-        return redirect('/admin/product_type/edit?id=' . $productTypeId);
     }
-    */
 
-    public function deleteField(Request $request, int $id)
+    /**
+     * Elimina un campo especializado
+     */
+    public function deleteField(Request $request, int $id): Redirect
     {
-        $field = ProductSpecialField::findOrFail($id);
-        $productTypeId = $request->post('product_type_id');
-        
         try {
-            // Eliminar también los valores asociados si existen
+            $field = ProductSpecialField::findOrFail($id);
+            $productTypeId = $field->product_type_id;
+
+            // Eliminar también los valores asociados
             ProductSpecialValue::where('special_field_id', $id)->delete();
             
             // Eliminar el campo
             $field->delete();
-            
-            Session::flash('success', 'Campo eliminado correctamente.');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al eliminar el campo: ' . $e->getMessage());
+
+            return redirect((string) url('product_type_edit', ['id' => $productTypeId]))
+                ->with('success', 'Campo eliminado correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Campo no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('product_type_edit', ['id' => $productTypeId ?? $id]))
+                ->with('error', 'Error al eliminar el campo: ' . $e->getMessage());
         }
-
-        return redirect('/admin/product_type/edit?id=' . $productTypeId);
     }
 
-
-public function addField(Request $request, int $id)
-{
-    $data = $request->post();
-    
-    // Validar primero que el product_type_id existe
-    $productType = ProductType::find($id);
-    if (!$productType) {
-        return redirect('/admin/product_type/edit?id=' . $id)
-            ->with('error', 'El tipo de producto no existe');
-    }
-
-    $validate = new ProductTypeSpecialFieldValidator();
-    if (!$validate->check($data)) {
-        return redirect('/admin/product_type/edit?id=' . $id)
-            ->with('error', $validate->getError());
-    }
-
-    try {
-        $field = new ProductSpecialField();
-        $field->name = $data['name'];
-        $field->slug = $data['slug'];
-        $field->data_type = $data['data_type'];
-        $field->unit = $data['unit'] ?? null;
-        $field->required = isset($data['required']);
-        $field->product_type_id = $id; // Usamos el ID de la URL
-        $field->save();
-
-        Session::flash('success', 'Campo especializado añadido correctamente.');
-    } catch (\Exception $e) {
-        Session::flash('error', 'Error al añadir el campo: ' . $e->getMessage());
-    }
-
-    return redirect('/admin/product_type/edit?id=' . $id);
-}
-
-    /*
-    public function addField(Request $request, int $id)
+    /**
+     * Elimina un tipo de producto (soft delete)
+     */
+    public function delete(int $id): Redirect
     {
-        $productType = ProductType::findOrFail($id);
-        $data = $request->post();
-
-        // Validación básica
-        if (empty($data['name']) || empty($data['slug']) || empty($data['data_type'])) {
-            return redirect('/admin/product_type/edit?id=' . $id)
-                ->with('error', 'Nombre, slug y tipo de dato son obligatorios');
-        }
-
         try {
-            // Crear el nuevo campo especializado
-            $field = new ProductSpecialField();
-            $field->name = $data['name'];
-            $field->slug = $data['slug'];
-            $field->data_type = $data['data_type'];
-            $field->unit = $data['unit'] ?? null;
-            $field->required = isset($data['required']) ? true : false;
-            $field->product_type_id = $id;
-            $field->save();
+            $productType = ProductType::findOrFail($id);
+            $productType->delete();
+            return redirect((string) url('product_type_index'))->with('success', 'Tipo de producto eliminado correctamente.');
 
-            Session::flash('success', 'Campo especializado añadido correctamente.');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al añadir el campo: ' . $e->getMessage());
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Tipo de producto no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Error al eliminar el tipo de producto: ' . $e->getMessage());
         }
-
-        return redirect('/admin/product_type/edit?id=' . $id);
     }
-    */
 
-    public function save(Request $request)
+    /**
+     * Restaura un tipo de producto previamente eliminado
+     */
+    public function restore(int $id): Redirect
     {
-        $data = $request->post();
-
-        $validate = new ProductTypeFormValidator();
-        if (!$validate->check($data)) {
-            return redirect('/admin/product_type/create')->with('error', $validate->getError());
-        }
-
         try {
-            ProductType::create($data);
-            Session::flash('success', 'Tipo de producto creado correctamente.');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al guardar el tipo de producto: ' . $e->getMessage());
+            $productType = ProductType::onlyTrashed()->findOrFail($id);
+            $productType->restore();
+            return redirect((string) url('product_type_index'))->with('success', 'Tipo de producto restaurado correctamente.');
+
+        } catch (ModelNotFoundException $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Tipo de producto no encontrado.');
+        } catch (Exception $e) {
+            return redirect((string) url('product_type_index'))->with('error', 'Error al restaurar el tipo de producto: ' . $e->getMessage());
         }
-
-        return redirect('/admin/product_type/index');
-    }
-
-    public function edit(int $id)
-    {
-        $successMessage = Session::get('success');
-        $errorMessage = Session::get('error');
-        $productType = ProductType::with('specialFields')->findOrFail($id);
-        //$productType = ProductType::findOrFail($id);
-        //return View::fetch('admin/product_type/edit', ['productType' => $productType]);
-        return View::fetch('admin/product_type/edit', [
-            'productType' => $productType,
-            'success'      => $successMessage,
-            'error'        => $errorMessage,
-        ]);
-    }
-
-    public function update(Request $request, int $id)
-    {
-        $data = $request->post();
-        $productType = ProductType::findOrFail($id);
-
-
-        //dump($data);
-
-        
-
-
-        $validate = new ProductTypeFormValidator();
-
-        //dump($validate);
-
-        if ($data['slug'] === $productType->slug) {
-            $validate->rule([
-                'txt_short' => 'require|max:15',
-                'slug'      => 'require|max:55',
-            ]);
-        }
-
-
-        //dump($data);
-
-        
-
-        if (!$validate->check($data)) {
-            //dump($validate->getError());
-            //return;
-            //Session::flash('error', 'Error al actualizar el tipo: ' . $validate->getError());
-            return redirect('/admin/product_type/edit?id=' . $id)->with('error', $validate->getError());
-        }
-
-        try {
-            $productType->save($data);
-            Session::flash('success', 'Tipo de producto actualizado correctamente.');
-        } catch (\Exception $e) {
-            Session::flash('error', 'Error al actualizar el tipo de producto: ' . $e->getMessage());
-        }
-
-        return redirect('/admin/product_type/index');
-    }
-
-    public function delete(Request $request, int $id)
-    {
-        $productType = ProductType::findOrFail($id);
-        $productType->delete();
-        return redirect('/admin/product_type/index')->with('success', 'Tipo de producto eliminado correctamente.');
-    }
-
-    public function restore(Request $request, int $id)
-    {
-        $productType = ProductType::onlyTrashed()->findOrFail($id);
-        $productType->restore();
-        return redirect('/admin/product_type/index')->with('success', 'Tipo de producto restaurado correctamente.');
     }
 }

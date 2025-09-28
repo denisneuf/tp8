@@ -1,230 +1,433 @@
-
 {extend name="admin/layout" /}
 
 {block name="content"}
-<h2>Editar tipo de producto</h2>
 
+    <!-- Alertas de notificación -->
+    {if isset($error)}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error:</strong> {$error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
-{if isset($success)}
-    <div class="alert alert-success">{$success}</div>
-{/if}
-{if isset($error)}
-    <div class="alert alert-danger">{$error}</div>
-{/if}
+    {if isset($success)}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Éxito:</strong> {$success}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {/if}
 
-<form action="{:url('product_type_update', ['id' => $productType.id])}" method="post">
-    {:token_field()}
-
-    <div class="mb-3">
-        <label for="name" class="form-label">Nombre</label>
-        <input type="text" class="form-control" name="name" value="{$productType.name}" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="slug" class="form-label">Slug</label>
-        <input type="text" class="form-control" name="slug" value="{$productType.slug}" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="bs_icon" class="form-label">Icono Bootstrap</label>
-        <input type="text" class="form-control" name="bs_icon" value="{$productType.bs_icon}" placeholder="Ej: laptop">
-    </div>
-
-    <div class="mb-3">
-        <label for="txt_short" class="form-label">Texto corto</label>
-        <input type="text" class="form-control" name="txt_short" value="{$productType.txt_short}" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="txt_long" class="form-label">Texto largo</label>
-        <input type="text" class="form-control" name="txt_long" value="{$productType.txt_long}" required>
-    </div>
-
-    <div class="mb-3">
-        <label for="description" class="form-label">Descripción</label>
-        <textarea class="form-control" name="description" rows="3">{$productType.description}</textarea>
-    </div>
-
-    <div class="mb-3">
-        <label for="pic" class="form-label">Imagen</label>
-        <input type="text" class="form-control" name="pic" value="{$productType.pic}">
-    </div>
-
-    <div class="mb-3">
-        <label for="bg" class="form-label">Fondo</label>
-        <input type="text" class="form-control" name="bg" value="{$productType.bg}">
-    </div>
-
-    <div class="mb-3">
-        <label for="visible" class="form-label">Visible</label>
-        <select class="form-select" name="visible">
-            <option value="1" {if $productType.visible == 1}selected{/if}>Sí</option>
-            <option value="0" {if $productType.visible == 0}selected{/if}>No</option>
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-    <a href="{:url('product_type_index')}" class="btn btn-secondary">Cancelar</a>
-</form>
-
-
-
-<hr class="my-5">
-<div class="mt-5">
-    <h3>Campos Especializados</h3>
-    
-    <!-- Lista de campos existentes -->
-    <div class="mb-4">
-        <h5>Campos actuales:</h5>
-        {if $productType->specialFields && $productType->specialFields->count()}
-            {volist name="productType->specialFields" id="field"}
-            <div class="card mb-2">
-                <div class="card-body py-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{$field.name}</strong> 
-                            <span class="text-muted">({$field.slug})</span>
-                            <br>
-                            <small>
-                                Tipo: {$field.data_type} 
-                                {if $field.unit}| Unidad: {$field.unit}{/if}
-                                | Requerido: {if $field.required}Sí{else}No{/if}
-                            </small>
+    <!-- Tarjeta principal del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-tags me-2"></i>Editar Tipo de Producto - {$productType.name}
+            </h6>
+            <a href="{:url('product_type_index')}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{:url('product_type_update', ['id' => $productType.id])}" method="post" novalidate>
+                {:token_field()}
+                
+                <!-- Sección: Información Básica -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'name'}is-invalid{/if}" 
+                                   name="name" id="name" required 
+                                   maxlength="100" value="{if isset($old_data.name)}{$old_data.name}{else}{$productType.name}{/if}"
+                                   placeholder="Ej: Laptops, Smartphones, Accesorios">
+                            {if isset($error_field) && $error_field == 'name'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Nombre descriptivo del tipo de producto.</div>
                         </div>
-                        <div>
-                            <a href="#" 
-                               class="btn btn-sm btn-outline-warning"
-                               data-bs-toggle="modal" 
-                               data-bs-target="#editFieldModal"
-                               data-field-id="{$field.id}"
-                               data-field-name="{$field.name}"
-                               data-field-slug="{$field.slug}"
-                               data-field-data-type="{$field.data_type}"
-                               data-field-unit="{$field.unit}"
-                               data-field-required="{$field.required ? '1' : '0'}">
-                                Editar
-                            </a>
-                            <a href="#" class="btn btn-sm btn-outline-danger" onclick="event.preventDefault(); if(confirm('¿Eliminar este campo? Se perderán todos sus valores.')) {
-                                    document.getElementById('delete-form-{$field.id}').submit();
-                                }">
-                            Eliminar
-                            </a>
-
-                            <form id="delete-form-{$field.id}" 
-                                  action="{:url('product_type_delete_field', ['id' => $field.id])}" 
-                                  method="post" 
-                                  style="display: none;">
-                                {:token_field()}
-                                <input type="hidden" name="product_type_id" value="{$productType.id}">
-                            </form>
+                        
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'slug'}is-invalid{/if}" 
+                                   name="slug" id="slug" required 
+                                   maxlength="100" value="{if isset($old_data.slug)}{$old_data.slug}{else}{$productType.slug}{/if}"
+                                   placeholder="Ej: laptops, smartphones, accesorios">
+                            {if isset($error_field) && $error_field == 'slug'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 100 caracteres. Solo letras, números y guiones. Usado en URLs.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bs_icon" class="form-label">Icono Bootstrap</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'bs_icon'}is-invalid{/if}" 
+                                   name="bs_icon" id="bs_icon" 
+                                   maxlength="50" value="{if isset($old_data.bs_icon)}{$old_data.bs_icon}{else}{$productType.bs_icon}{/if}"
+                                   placeholder="Ej: laptop, phone, headset">
+                            {if isset($error_field) && $error_field == 'bs_icon'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Nombres de iconos de <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="bi bi-image me-2"></i>Imágenes y Visibilidad</h5>
+                        
+                        <div class="mb-3">
+                            <label for="pic" class="form-label">Imagen URL</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'pic'}is-invalid{/if}" 
+                                   name="pic" id="pic" 
+                                   maxlength="255" value="{if isset($old_data.pic)}{$old_data.pic}{else}{$productType.pic}{/if}"
+                                   placeholder="https://ejemplo.com/imagen.jpg">
+                            {if isset($error_field) && $error_field == 'pic'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. URL de la imagen representativa.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bg" class="form-label">Fondo URL</label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'bg'}is-invalid{/if}" 
+                                   name="bg" id="bg" 
+                                   maxlength="255" value="{if isset($old_data.bg)}{$old_data.bg}{else}{$productType.bg}{/if}"
+                                   placeholder="https://ejemplo.com/fondo.jpg">
+                            {if isset($error_field) && $error_field == 'bg'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. URL de imagen de fondo.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="visible" class="form-label">Visible</label>
+                            <select class="form-select {if isset($error_field) && $error_field == 'visible'}is-invalid{/if}" 
+                                    name="visible" id="visible">
+                                <option value="1" {if (isset($old_data.visible) && $old_data.visible == 1) || $productType.visible == 1}selected{/if}>Sí</option>
+                                <option value="0" {if (isset($old_data.visible) && $old_data.visible == 0) || $productType.visible == 0}selected{/if}>No</option>
+                            </select>
+                            {if isset($error_field) && $error_field == 'visible'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Determina si el tipo de producto es visible en el catálogo.</div>
                         </div>
                     </div>
                 </div>
-            </div>
-            {/volist}
-        {else}
-            <div class="alert alert-info">
-                No hay campos especializados definidos para este tipo de producto.
-            </div>
-        {/if}
-    </div>
-
-    <!-- Formulario para nuevo campo -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Añadir nuevo campo</h5>
-        </div>
-        <div class="card-body">
-            <form action="{:url('product_type_add_field', ['id' => $productType.id])}" method="post">
-                {:token_field()}
-                <div class="row g-2">
-                    <div class="col-md-3">
-                        <input type="text" name="name" class="form-control" placeholder="Nombre" required>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" name="slug" class="form-control" placeholder="Slug" required>
-                    </div>
-                    <div class="col-md-2">
-                        <select name="data_type" class="form-select" required>
-                            <option value="string">Texto</option>
-                            <option value="integer">Entero</option>
-                            <option value="float">Decimal</option>
-                            <option value="boolean">Booleano</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" name="unit" class="form-control" placeholder="Unidad (opcional)">
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-check pt-2">
-                            <input type="checkbox" name="required" value="1" class="form-check-input">
-                            <label class="form-check-label">Requerido</label>
+                
+                <!-- Sección: Textos y Descripción -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-text-paragraph me-2"></i>Textos y Descripción</h5>
+                        
+                        <div class="mb-3">
+                            <label for="txt_short" class="form-label">Texto Corto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'txt_short'}is-invalid{/if}" 
+                                   name="txt_short" id="txt_short" required 
+                                   maxlength="255" value="{if isset($old_data.txt_short)}{$old_data.txt_short}{else}{$productType.txt_short}{/if}"
+                                   placeholder="Descripción breve del tipo de producto">
+                            {if isset($error_field) && $error_field == 'txt_short'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">Máximo 255 caracteres. Descripción breve que aparece en listados.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="txt_long" class="form-label">Texto Largo</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'txt_long'}is-invalid{/if}" 
+                                      name="txt_long" id="txt_long" 
+                                      rows="4" maxlength="65535" 
+                                      placeholder="Descripción extensa del tipo de producto">{if isset($old_data.txt_long)}{$old_data.txt_long}{else}{$productType.txt_long}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'txt_long'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">
+                                Máximo 65,535 caracteres. 
+                                <span id="txtLongCount">
+                                    {if isset($old_data.txt_long)}
+                                        {$old_data.txt_long|mb_strlen}
+                                    {else /}
+                                        {$productType.txt_long|mb_strlen}
+                                    {/if}
+                                </span> caracteres usados.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción</label>
+                            <textarea class="form-control {if isset($error_field) && $error_field == 'description'}is-invalid{/if}" 
+                                      name="description" id="description" 
+                                      rows="3" maxlength="65535" 
+                                      placeholder="Información adicional sobre el tipo de producto">{if isset($old_data.description)}{$old_data.description}{else}{$productType.description}{/if}</textarea>
+                            {if isset($error_field) && $error_field == 'description'}
+                                <div class="invalid-feedback">{$error}</div>
+                            {/if}
+                            <div class="form-text">
+                                Máximo 65,535 caracteres. 
+                                <span id="descriptionCount">
+                                    {if isset($old_data.description)}
+                                        {$old_data.description|mb_strlen}
+                                    {else /}
+                                        {$productType.description|mb_strlen}
+                                    {/if}
+                                </span> caracteres usados.
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-success">+</button>
+                </div>
+                
+                <!-- Información de auditoría -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    Creado: {$productType.create_time|date='d/m/Y H:i'} | 
+                                    Actualizado: {$productType.update_time|date='d/m/Y H:i'}
+                                    {if $productType.delete_time}
+                                    | <span class="text-danger">Eliminado: {$productType.delete_time|date='d/m/Y H:i'}</span>
+                                    {/if}
+                                </small>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Actualizar Tipo de Producto
+                    </button>
+                    <a href="{:url('product_type_index')}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
                 </div>
             </form>
         </div>
     </div>
-</div>
 
-
-
-
-
-<!-- Modal para editar campo -->
-<div class="modal fade" id="editFieldModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="editFieldForm" method="post">
-      {:token_field()}
-      <!--<input type="hidden" name="product_type_id" value="{$productType.id}">-->
-      <input type="hidden" name="field_id" id="editFieldId">
-      
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Editar Campo</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Sección: Campos Especializados -->
+    <div class="card shadow mt-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold">
+                <i class="bi bi-list-check me-2"></i>Campos Especializados
+            </h6>
         </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Nombre</label>
-            <input type="text" name="name" id="editFieldName" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Slug</label>
-            <input type="text" name="slug" id="editFieldSlug" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Tipo de dato</label>
-            <select name="data_type" id="editFieldDataType" class="form-select" required>
-              <option value="string">Texto</option>
-              <option value="integer">Entero</option>
-              <option value="float">Decimal</option>
-              <option value="boolean">Booleano</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Unidad (opcional)</label>
-            <input type="text" name="unit" id="editFieldUnit" class="form-control">
-          </div>
-          <div class="form-check mb-3">
-            <input type="checkbox" name="required" id="editFieldRequired" value="1" class="form-check-input">
-            <label class="form-check-label">Requerido</label>
-          </div>
+        <div class="card-body">
+            
+            <!-- Lista de campos existentes -->
+            <div class="mb-4">
+                <h5 class="text-primary mb-3">Campos Actuales</h5>
+                {if $productType->specialFields && $productType->specialFields->count()}
+                    {volist name="productType->specialFields" id="field"}
+                    <div class="card mb-3 border">
+                        <div class="card-body py-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <strong class="me-2">{$field.name}</strong>
+                                        <code class="text-muted bg-light px-2 py-1 rounded">{$field.slug}</code>
+                                        <span class="badge bg-primary ms-2">{$field.data_type}</span>
+                                        {if $field.unit}
+                                        <span class="badge bg-secondary ms-1">{$field.unit}</span>
+                                        {/if}
+                                        {if $field.required}
+                                        <span class="badge bg-danger ms-1">Requerido</span>
+                                        {/if}
+                                    </div>
+                                    <small class="text-muted">
+                                        ID: {$field.id} | 
+                                        Creado: {$field.create_time|date='d/m/Y H:i'}
+                                    </small>
+                                </div>
+                                <div class="d-flex gap-2 ms-3">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-warning"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editFieldModal"
+                                            data-field-id="{$field.id}"
+                                            data-field-name="{$field.name}"
+                                            data-field-slug="{$field.slug}"
+                                            data-field-data-type="{$field.data_type}"
+                                            data-field-unit="{$field.unit}"
+                                            data-field-required="{$field.required ? '1' : '0'}">
+                                        <i class="bi bi-pencil me-1"></i>Editar
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            onclick="if(confirm('¿Eliminar este campo? Se perderán todos los valores asociados a productos.')) { document.getElementById('delete-form-{$field.id}').submit(); }">
+                                        <i class="bi bi-trash me-1"></i>Eliminar
+                                    </button>
+
+                                    <form id="delete-form-{$field.id}" 
+                                          action="{:url('product_type_delete_field', ['id' => $field.id])}" 
+                                          method="post" 
+                                          style="display: none;">
+                                        {:token_field()}
+                                        <input type="hidden" name="product_type_id" value="{$productType.id}">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/volist}
+                {else}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No hay campos especializados definidos para este tipo de producto.
+                    </div>
+                {/if}
+            </div>
+
+            <!-- Formulario para nuevo campo -->
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-plus-circle me-2"></i>Añadir Nuevo Campo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form action="{:url('product_type_add_field', ['id' => $productType.id])}" method="post">
+                        {:token_field()}
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small">Nombre</label>
+                                <input type="text" name="name" class="form-control" placeholder="Ej: Color, Tamaño, Peso" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Slug</label>
+                                <input type="text" name="slug" class="form-control" placeholder="Ej: color, size, weight" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Tipo de Dato</label>
+                                <select name="data_type" class="form-select" required>
+                                    <option value="string">Texto</option>
+                                    <option value="integer">Entero</option>
+                                    <option value="float">Decimal</option>
+                                    <option value="boolean">Booleano</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Unidad</label>
+                                <input type="text" name="unit" class="form-control" placeholder="Ej: kg, cm, unidades">
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="required" value="1" class="form-check-input" id="requiredCheck">
+                                    <label class="form-check-label small" for="requiredCheck">Requerido</label>
+                                </div>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar cambios</button>
-        </div>
+    </div>
+
+    <!-- Modal para editar campo -->
+    <div class="modal fade" id="editFieldModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="editFieldForm" method="post">
+          {:token_field()}
+          <input type="hidden" name="field_id" id="editFieldId">
+          
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Editar Campo Especializado</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" name="name" id="editFieldName" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Slug</label>
+                <input type="text" name="slug" id="editFieldSlug" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Tipo de dato</label>
+                <select name="data_type" id="editFieldDataType" class="form-select" required>
+                  <option value="string">Texto</option>
+                  <option value="integer">Entero</option>
+                  <option value="float">Decimal</option>
+                  <option value="boolean">Booleano</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Unidad (opcional)</label>
+                <input type="text" name="unit" id="editFieldUnit" class="form-control">
+              </div>
+              <div class="form-check mb-3">
+                <input type="checkbox" name="required" id="editFieldRequired" value="1" class="form-check-input">
+                <label class="form-check-label">Campo requerido</label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
-</div>
+    </div>
 
+{/block}
+
+{block name="scripts"}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Contador de caracteres para txt_long
+    const txtLongTextarea = document.getElementById('txt_long');
+    const txtLongCount = document.getElementById('txtLongCount');
+    
+    if (txtLongTextarea && txtLongCount) {
+        txtLongCount.textContent = txtLongTextarea.value.length;
+        txtLongTextarea.addEventListener('input', function() {
+            txtLongCount.textContent = this.value.length;
+        });
+    }
+    
+    // Contador de caracteres para description
+    const descriptionTextarea = document.getElementById('description');
+    const descriptionCount = document.getElementById('descriptionCount');
+    
+    if (descriptionTextarea && descriptionCount) {
+        descriptionCount.textContent = descriptionTextarea.value.length;
+        descriptionTextarea.addEventListener('input', function() {
+            descriptionCount.textContent = this.value.length;
+        });
+    }
+    
+    // Auto-generar slug desde el nombre en el formulario de nuevo campo
+    const newFieldName = document.querySelector('input[name="name"]');
+    const newFieldSlug = document.querySelector('input[name="slug"]');
+    
+    if (newFieldName && newFieldSlug) {
+        newFieldName.addEventListener('blur', function() {
+            if (!newFieldSlug.value.trim()) {
+                const generatedSlug = this.value
+                    .toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+                newFieldSlug.value = generatedSlug;
+            }
+        });
+    }
+    
+    // Modal para editar campos
     const editModal = document.getElementById('editFieldModal');
     
     editModal.addEventListener('show.bs.modal', function(event) {
@@ -236,13 +439,45 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('editFieldName').value = button.getAttribute('data-field-name');
         document.getElementById('editFieldSlug').value = button.getAttribute('data-field-slug');
         document.getElementById('editFieldDataType').value = button.getAttribute('data-field-data-type');
-        document.getElementById('editFieldUnit').value = button.getAttribute('data-field-unit');
+        document.getElementById('editFieldUnit').value = button.getAttribute('data-field-unit') || '';
         document.getElementById('editFieldRequired').checked = button.getAttribute('data-field-required') === '1';
         
         // Setear la acción del formulario
         form.action = '{:url("product_type_update_field")}?id=' + button.getAttribute('data-field-id');
     });
+    
+    // Validación básica del formulario principal
+    const form = document.querySelector('form[action*="product_type_update"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                    
+                    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'Este campo es obligatorio.';
+                        field.parentNode.insertBefore(errorDiv, field.nextSibling);
+                    }
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+    }
 });
 </script>
-
 {/block}
