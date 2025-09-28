@@ -44,7 +44,7 @@
                     <tr>
                         <td><code>{$meta.id}</code></td>
                         <td>{$meta.page}</td>
-                        <td>{$meta.title}</td>
+                        <td>{:mb_strimwidth($meta.title, 0, 30, '...')}</td>
                         <!--<td>{$meta.metatitle|default='-'}</td>-->
                         <!--<td>{$meta.description|default='-'|substr=0,50}...</td>-->
                         <td>

@@ -42,9 +42,27 @@ class MetaFormValidator extends Validate
     /**
      * Escena para actualización (ignorar unique en el registro actual)
      */
-    public function sceneUpdate($id)
+
+    
+    //Working
+    public function sceneUpdate(int $id)
     {
-        return $this->remove('page', 'unique')
-                    ->append('page', 'unique:meta,page,' . $id);
+        // Filtramos los campos que queremos validar
+        $this->only([
+            'page', 'title', 'metatitle', 'description', 'keywords', 'og_title', 'og_description', 'og_image', 'og_type'
+        ]);
+
+        // Quitamos las reglas base de page (que tenían unique sin id)
+        $this->removeRule(['page']);
+
+        // Añadimos las reglas correctas para update
+        $this->rule([
+            'page' => "require|max:100|unique:meta,page,{$id},id",
+        ]);
+
+        return $this;
     }
+    
+
+
 }
