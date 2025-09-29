@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="{$lang}">
 <head>
-  <title>{$title|raw}</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="title" content="{$metatitle|raw}"/>
-  <meta name="description" content="{$description|raw}"/>
-  <meta name="keywords" content="{$keywords|raw}">
+<title>{$title|raw}</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="title" content="{$metatitle|raw}"/>
+	<meta name="description" content="{$description|raw}"/>
+	<meta name="keywords" content="{$keywords|raw}">
+	<meta property="og:title" content="{$og_title|raw}">
+	<meta property="og:description" content="{$og_description|raw}">
+	<meta property="og:image" content="{$og_image|raw}">
+	<meta property="og:type" content="{$og_type|raw}">
   {css href="/static/css/bootstrap.min.css" /}
   {css href="/static/font/bootstrap-icons.css" /}
 </head>

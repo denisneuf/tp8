@@ -24,6 +24,10 @@ class MetaIndex
             'description' => 'Descripción por defecto para ' . ucfirst($page),
             'keywords'    => $page,
             'lang'        => config('lang.default_lang', 'es'),
+            'og_title'    => ucfirst($page),
+            'og_description' => 'OG Descripción por defecto para ' . ucfirst($page),
+            'og_image'    => 'https://example.com/img.jpg',
+            'og_type'  => 'website',
         ];
 
         // Si no existe meta en la BD, usar valores por defecto y marcar bandera
@@ -37,7 +41,11 @@ class MetaIndex
                 'description' => $meta->description ?? '',
                 'keywords'    => $meta->keywords ?? '',
                 'lang'        => config('lang.default_lang', 'es'),
+                'og_title'    => $meta->og_title ?? $meta->title,
+                'og_description' => $meta->og_description ?? substr($product.description, 0, 160),
+                'og_image'    => $meta->og_image ?? '',
                 'defaultmeta' => false,
+                'og_type'     => $meta->og_type ?? 'website',
             ];
         }
 
