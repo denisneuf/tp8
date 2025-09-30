@@ -10,7 +10,20 @@
 
 
 {volist name='brands' id='brand'}
-    <li> {$brand.brand_cn}</li>
+    <li>
+    	
+    <a href="{:url('brand_info', ['slug' => $brand.slug], false)}">
+        {$brand.brand_cn}
+    </a>
+
+<!--
+    Slug: {$brand.slug}
+<br>
+URL generada: {:url('brand_info', ['slug' => $brand.slug])}
+<br>
+URL sin sufijo: {:url('brand_info', ['slug' => $brand.slug], false)}
+-->
+    </li>
 {/volist}
 
 

@@ -143,7 +143,7 @@ class ProductController extends BaseController
                     $data['pic'] = $this->imageService->processSquareImage(
                         $file,
                         $productPath,
-                        $data['name'], // Usar nombre del producto para el slug
+                        $data['asin'], // Usar asin del producto para el slug
                         null
                     );
                 } catch (RuntimeException $e) {
@@ -257,7 +257,7 @@ class ProductController extends BaseController
                     $data['pic'] = $this->imageService->processSquareImage(
                         $file,
                         $productPath,
-                        $data['name'],
+                        $data['asin'],
                         $product->pic // Imagen anterior para eliminar
                     );
                 } catch (RuntimeException $e) {

@@ -22,7 +22,8 @@ class ImageService
         'sm' => 100,   // Small (para listas)
         'md' => 150,   // Medium (para cards)
         'lg' => 300,   // Large (para detalle)
-        'xl' => 500    // Extra large (para lightbox)
+        'xl' => 500,    // Extra large (para lightbox)
+        'xxl' => 1000    // Extra large (para lightbox)
     ];
 
     private int $imageMinDimension;

@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
         asinInput.addEventListener('blur', function() {
             if (this.value.trim() && !amazonlinkInput.value.trim()) {
                 const asin = this.value.trim();
-                const amazonLink = `https://amazon.es/${asin}?tag=leadtech21`;
+                const amazonLink = `https://amazon.es/dp/${asin}?tag=leadtech21`;
                 amazonlinkInput.value = amazonLink;
             }
         });
@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
         asinInput.addEventListener('input', function() {
             if (this.value.trim() && !amazonlinkInput.value.trim()) {
                 const asin = this.value.trim();
-                const amazonLink = `https://amazon.es/${asin}?tag=leadtech21`;
+                const amazonLink = `https://amazon.es/dp/${asin}?tag=leadtech21`;
                 amazonlinkInput.value = amazonLink;
             }
         });

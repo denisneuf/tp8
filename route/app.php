@@ -13,8 +13,10 @@ use think\facade\Route;
 //Route::get('/', 'Index@index')->middleware('meta');
 
 
-Route::get('/','Index/index')->middleware('meta');
+Route::get('/','app\controller\Index@index')->middleware('meta');
+Route::get('/marcas/:slug', 'app\controller\Index@brand')->name('brand_info')->pattern(['slug' => '\w+'])->middleware('meta');
 
+Route::get('/marcas', 'app\controller\Index@brands')->name('brands_info')->middleware('meta');
 
 Route::group('admin', function () {
     

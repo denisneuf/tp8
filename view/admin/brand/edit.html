@@ -11,15 +11,6 @@
         </div>
     {/if}
 
-    {if isset($old_data) && $old_data}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <i class="fas fa-info-circle mr-2"></i>
-            <strong>DEBUG Old Data:</strong>
-            <pre>{:print_r($old_data, true)}</pre>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {/if}
-
     <!-- Tarjeta principal del formulario -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -130,7 +121,6 @@
                             {/if}
                         </div>
 
-
                         <div class="mb-3">
                             <div class="form-check form-switch">
                                 <!-- Campo hidden que siempre enviará el valor 0 cuando el checkbox no esté marcado -->
@@ -153,69 +143,14 @@
                                 <div class="form-text">Determina si la marca es visible en el sitio.</div>
                             </div>
                         </div>
-
-
-
-
-                    </div>
-                </div>
-                
-                <!-- Sección: SEO -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <h5 class="text-primary mb-3"><i class="bi bi-search me-2"></i>Optimización SEO</h5>
-                        
-                        <div class="mb-3">
-                            <label for="meta_title" class="form-label">Título SEO</label>
-                            <input type="text" class="form-control {if isset($error_field) && $error_field == 'meta_title'}is-invalid{/if}" 
-                                   name="meta_title" id="meta_title" 
-                                   maxlength="255" value="{if isset($old_data.meta_title)}{$old_data.meta_title}{else}{$brand.meta_title|default=''}{/if}">
-                            {if isset($error_field) && $error_field == 'meta_title'}
-                                <div class="invalid-feedback">{$error}</div>
-                            {/if}
-                            <div class="form-text">Máximo 255 caracteres.</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="meta_description" class="form-label">Descripción SEO</label>
-                            <textarea class="form-control {if isset($error_field) && $error_field == 'meta_description'}is-invalid{/if}" 
-                                      name="meta_description" id="meta_description" 
-                                      rows="3" maxlength="1000">{if isset($old_data.meta_description)}{$old_data.meta_description}{else}{$brand.meta_description|default=''}{/if}</textarea>
-                            {if isset($error_field) && $error_field == 'meta_description'}
-                                <div class="invalid-feedback">{$error}</div>
-                            {/if}
-                            <div class="form-text">Máximo 1000 caracteres.</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="keywords" class="form-label">Palabras clave</label>
-                            <textarea class="form-control {if isset($error_field) && $error_field == 'keywords'}is-invalid{/if}" 
-                                      name="keywords" id="keywords" 
-                                      rows="2" maxlength="255">{if isset($old_data.keywords)}{$old_data.keywords}{else}{$brand.keywords|default=''}{/if}</textarea>
-                            {if isset($error_field) && $error_field == 'keywords'}
-                                <div class="invalid-feedback">{$error}</div>
-                            {/if}
-                            <div class="form-text">Separar palabras clave con comas. Máximo 255 caracteres.</div>
-                        </div>
                     </div>
                 </div>
                 
                 <!-- Sección: Descripciones -->
                 <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="txt_description" class="form-label">Descripción larga</label>
-                            <textarea class="form-control {if isset($error_field) && $error_field == 'txt_description'}is-invalid{/if}" 
-                                      name="txt_description" id="txt_description" 
-                                      rows="4" maxlength="2000">{if isset($old_data.txt_description)}{$old_data.txt_description}{else}{$brand.txt_description|default=''}{/if}</textarea>
-                            {if isset($error_field) && $error_field == 'txt_description'}
-                                <div class="invalid-feedback">{$error}</div>
-                            {/if}
-                            <div class="form-text">Máximo 2000 caracteres.</div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
+                    <div class="col-12">
+                        <h5 class="text-primary mb-3"><i class="bi bi-text-paragraph me-2"></i>Descripciones</h5>
+                        
                         <div class="mb-3">
                             <label for="block_description" class="form-label">Descripción destacada</label>
                             <textarea class="form-control {if isset($error_field) && $error_field == 'block_description'}is-invalid{/if}" 
@@ -308,8 +243,6 @@
         </div>
     </div>
 
-
-
 <!-- Modal de aviso -->
 <div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -327,7 +260,6 @@
     </div>
   </div>
 </div>
-
 
 {/block}
 
@@ -363,7 +295,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!isValid) {
             e.preventDefault();
-            //alert('Por favor, complete los campos obligatorios marcados con *.');
             showAlert('Por favor, complete todos los campos obligatorios.');
         }
     });

@@ -48,4 +48,28 @@ class Category extends Model
         'update_time'  => 'datetime',
         'delete_time'  => 'datetime',
     ];
+
+
+    // En app/model/Category.php - Añadir estas relaciones
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'category_id');
+    }
+
+    public function productTypes()
+    {
+        return $this->hasMany(ProductType::class, 'category_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id')->order('order', 'asc');
+    }
+
+
 }

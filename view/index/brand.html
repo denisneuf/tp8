@@ -1,0 +1,87 @@
+{include file="index/common/header" /}
+{include file="index/common/alert" /}
+{include file="index/common/menu" /}
+
+<div class="container mt-4">
+    <!-- Encabezado de Marca -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        {if $brand.pic}
+                        <div class="col-md-2 text-center">
+                            <img src="/static/img/brand/{$brand.pic}" alt="{$brand.brand_cn}" class="img-fluid" style="max-height: 100px;">
+                        </div>
+                        {/if}
+                        <div class="{if $brand.pic}col-md-10{else}col-12{/if}">
+                            {if $brand.block_description}
+                            <p class="lead mb-0">{$brand.block_description|raw}</p>
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos de la Marca - 4 Columnas -->
+    <div class="row">
+        <div class="col-12">
+            {if count($brand->products) > 0}
+            <div class="row g-3">
+                {volist name="brand->products" id="product"}
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                    <div class="card h-100 product-card">
+                        {if $product.pic}
+
+
+                        
+                        <!--<img src="/static/img/product/thumbnails/{$product.pic ? str_replace('.', '_xl.', $product.pic) : ''}"  class="card-img-top" alt="{$product.name}" style="height: 200px; object-fit: cover;">-->
+                        <img src="/static/img/product/{$product.pic}" class="card-img-top" alt="{$product.name}" style="height: 200px; object-fit: cover;">
+                        {/if}
+                        <div class="card-body">
+                            <h6 class="card-title">{$product.name}</h6>
+                            <div class="mb-2">
+                                {if $product.productType}
+                                <span class="badge bg-secondary">{$product.productType.txt_short}</span>
+                                {/if}
+                                <span class="badge bg-light text-dark">{$product.category.txt_short}</span>
+                            </div>
+                            <p class="card-text small text-muted">
+                                {if $product.description}
+                                {$product.description|mb_substr=0,100}...
+                                {/if}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h6 mb-0 text-success">€{$product.price}</span>
+                                <a href="{:url('product', ['slug' => $product.slug])}" class="btn btn-primary btn-sm">
+                                    Ver Producto
+                                </a>
+                            </div>
+                            {if $product.amazonlink}
+                            <div class="mt-2">
+                                <a href="{$product.amazonlink|raw}" target="_blank" class="btn btn-warning btn-sm w-100">
+                                    <i class="bi bi-amazon me-1"></i>Comprar en Amazon
+                                </a>
+                            </div>
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+                {/volist}
+            </div>
+            {else}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h3 class="text-muted">No hay productos disponibles</h3>
+                <p class="text-muted">Esta marca no tiene productos en stock actualmente.</p>
+            </div>
+            {/if}
+        </div>
+    </div>
+</div>
+
+{include file="index/common/footer" /}

@@ -1,0 +1,98 @@
+{include file="index/common/header" /}
+
+{include file="index/common/alert" /}
+
+{include file="index/common/menu" /}
+
+<div class="container mt-4">
+    <!-- Encabezado de la página -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold text-primary">
+                <i class="bi bi-tags-fill me-3"></i>Nuestras Marcas
+            </h1>
+            <p class="lead text-muted">Descubre todas las marcas disponibles en nuestro catálogo</p>
+        </div>
+    </div>
+
+    <!-- Grid de marcas -->
+    {if count($brands) > 0}
+    <div class="row g-4">
+        {volist name='brands' id='brand'}
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card h-100 shadow-sm border-0 brand-card">
+                <div class="card-body text-center p-4">
+                    <!-- Logo de la marca -->
+                    {if $brand.pic}
+                    <div class="brand-logo mb-3">
+                        <img src="/static/img/brand/{$brand.pic}" alt="{$brand.brand_cn}" class="img-fluid rounded" style="max-height: 80px; object-fit: contain;">
+                    </div>
+                    {else}
+                    <div class="brand-placeholder mb-3">
+                        <i class="bi bi-building display-6 text-secondary"></i>
+                    </div>
+                    {/if}
+                    
+                    <!-- Nombre de la marca -->
+                    <h5 class="card-title fw-bold text-dark mb-2">
+                        {$brand.brand_cn}
+                    </h5>
+                    
+                    {if $brand.brand_en}
+                    <p class="card-text text-muted small mb-3">
+                        {$brand.brand_en}
+                    </p>
+                    {/if}
+                    
+                    <!-- Botón de ver más -->
+                    <a href="{:url('brand_info', ['slug' => $brand.slug], false)}" class="btn btn-outline-primary btn-sm stretched-link">
+                        <i class="bi bi-arrow-right me-1"></i>Ver Detalles
+                    </a>
+                </div>
+                
+                <!-- Badge de visibilidad -->
+                {if $brand.visible == 0}
+                <div class="card-footer bg-warning bg-opacity-10 border-0">
+                    <small class="text-warning">
+                        <i class="bi bi-eye-slash me-1"></i>No visible
+                    </small>
+                </div>
+                {/if}
+            </div>
+        </div>
+        {/volist}
+    </div>
+
+    <!-- Mensaje si no hay marcas -->
+    {else}
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox display-1 text-warning mb-3"></i>
+                    <h3 class="text-warning">No hay marcas disponibles</h3>
+                    <p class="text-muted">Actualmente no tenemos marcas para mostrar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {/if}
+
+    <!-- Información adicional -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light border-0">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <i class="bi bi-info-circle me-2"></i>¿Buscas una marca específica?
+                    </h5>
+                    <p class="card-text text-muted mb-0">
+                        Si no encuentras la marca que buscas, contáctanos y te ayudaremos.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{include file="index/common/footer" /}
