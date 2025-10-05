@@ -43,22 +43,52 @@
                 {foreach $menus as $menu}
                 <tr class="{if $menu.delete_time}table-secondary{/if}">
                     <td>{$menu.id}</td>
-                    <td>{$menu.title}</td>
+                    <td>{$menu.title|raw}</td>
                     <td>{$menu.url}</td>
                     <td>{$menu.order}</td>
                     <td>
-                        <ul class="list-unstyled">
-                            {foreach $menu.columns as $column}
-                            <li>
-                                <strong>{$column.title}</strong>
-                                <ul>
-                                    {foreach $column.links as $link}
-                                    <li><a href="{$link.url}" target="_blank">{$link.title}</a></li>
-                                    {/foreach}
-                                </ul>
-                            </li>
+                        {if $menu.columns && count($menu.columns) > 0}
+                        <div class="accordion" id="accordionMenu-{$menu.id}">
+                            {foreach $menu.columns as $index => $column}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading-{$menu.id}-{$index}">
+                                    <button class="accordion-button collapsed" type="button" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#collapse-{$menu.id}-{$index}" 
+                                            aria-expanded="false" 
+                                            aria-controls="collapse-{$menu.id}-{$index}">
+                                        <strong>{$column.title}</strong>
+                                        <span class="badge bg-primary ms-2">{$column.links|count} enlaces</span>
+                                    </button>
+                                </h2>
+                                <div id="collapse-{$menu.id}-{$index}" 
+                                     class="accordion-collapse collapse" 
+                                     aria-labelledby="heading-{$menu.id}-{$index}" 
+                                     data-bs-parent="#accordionMenu-{$menu.id}">
+                                    <div class="accordion-body p-2">
+                                        {if $column.links && count($column.links) > 0}
+                                        <ul class="list-group list-group-flush">
+                                            {foreach $column.links as $link}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="me-2"><a href="{$link.url}" target="_blank"> {$link.title}</a></span>
+                                                    <!--<small class="text-muted">{$link.url}</small>-->
+                                                </div>
+                                                <span class="badge bg-light text-dark">Orden: {$link.order}</span>
+                                            </li>
+                                            {/foreach}
+                                        </ul>
+                                        {else}
+                                        <p class="text-muted mb-0">No hay enlaces en esta columna</p>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
                             {/foreach}
-                        </ul>
+                        </div>
+                        {else}
+                        <span class="text-muted">Sin columnas</span>
+                        {/if}
                     </td>
                     <td>
                         {if !$menu.delete_time}
@@ -68,31 +98,36 @@
                         {/if}
                     </td>
                     <td>
-                        {if !$menu.delete_time}
-                            <a href="{:url('menu_edit', ['id' => $menu.id])}" class="btn btn-sm btn-primary lh-1 rounded-pill">Editar</a>
-                            <button type="button" class="btn btn-sm btn-danger lh-1 rounded-pill" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#actionModal" 
-                                    data-id="{$menu.id}" 
-                                    data-action="delete">
-                                Eliminar
-                            </button>
-                        {else}
-                            <button type="button" class="btn btn-sm btn-warning lh-1 rounded-pill" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#actionModal" 
-                                    data-id="{$menu.id}" 
-                                    data-action="restore">
-                                Restaurar
-                            </button>
-                            <button type="button" class="btn btn-sm btn-dark lh-1 rounded-pill" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#actionModal" 
-                                    data-id="{$menu.id}" 
-                                    data-action="forceDelete">
-                                Eliminar
-                            </button>
-                        {/if}
+                        <div class="btn-group-vertical btn-group-sm">
+                            {if !$menu.delete_time}
+                                <a href="{:url('menu_edit', ['id' => $menu.id])}" 
+                                   class="btn btn-primary rounded-pill mb-1">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </a>
+                                <button type="button" class="btn btn-danger rounded-pill mb-1" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#actionModal" 
+                                        data-id="{$menu.id}" 
+                                        data-action="delete">
+                                    <i class="bi bi-trash me-1"></i>Eliminar
+                                </button>
+                            {else}
+                                <button type="button" class="btn btn-warning rounded-pill mb-1" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#actionModal" 
+                                        data-id="{$menu.id}" 
+                                        data-action="restore">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar
+                                </button>
+                                <button type="button" class="btn btn-dark rounded-pill" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#actionModal" 
+                                        data-id="{$menu.id}" 
+                                        data-action="forceDelete">
+                                    <i class="bi bi-trash-fill me-1"></i>Eliminar
+                                </button>
+                            {/if}
+                        </div>
                     </td>
                 </tr>
                 {/foreach}

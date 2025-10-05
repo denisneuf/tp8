@@ -99,10 +99,18 @@ class Product extends Model
         return $this->belongsTo(ProductType::class, 'product_type_id');
     }
 
+    // En app/model/Product.php
+    public function specialValues()
+    {
+        return $this->hasMany(ProductSpecialValue::class, 'product_id');
+    }
+
+    /*
     public function attributes()
     {
         return $this->hasMany(ProductAttribute::class, 'product_id');
     }
+    */
 
     /**
      * Método para obtener el título SEO con fallback inteligente

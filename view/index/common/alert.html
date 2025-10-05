@@ -4,4 +4,62 @@
         <strong>Error:</strong> Esta página usa metadatos por defecto. Por favor, añade los datos en el panel de administración
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+
+
+    <!-- TEMPORAL: Depuración de Metadatos (funciona para productos y páginas generales) -->
+<div class="container mt-3">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">DEBUG: Información de Metadatos</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>defaultmeta:</strong> {$defaultmeta ? 'TRUE' : 'FALSE'}</p>
+            <p><strong>Página:</strong> {$debug_page|default='N/A'}</p>
+            <p><strong>¿Tiene registro en BD?:</strong> {$debug_has_meta_record ? 'SÍ' : 'NO'}</p>
+            
+            <h6>Valores Asignados:</h6>
+            <ul>
+                <li>title: '{$title}'</li>
+                <li>metatitle: '{$metatitle}'</li>
+                <li>description: '{$description}'</li>
+                <li>keywords: '{$keywords}'</li>
+                <li>og_title: '{$og_title}'</li>
+                <li>og_description: '{$og_description}'</li>
+                <li>og_image: '{$og_image}'</li>
+                <li>og_type: '{$og_type}'</li>
+            </ul>
+            
+            {if isset($meta_flags)}
+            <h6>Flags de Campos por Defecto:</h6>
+            <ul>
+                <li>default_title: {$meta_flags.default_title ? 'TRUE' : 'FALSE'}</li>
+                <li>default_metatitle: {$meta_flags.default_metatitle ? 'TRUE' : 'FALSE'}</li>
+                <li>default_description: {$meta_flags.default_description ? 'TRUE' : 'FALSE'}</li>
+                <li>default_keywords: {$meta_flags.default_keywords ? 'TRUE' : 'FALSE'}</li>
+                <li>default_og_title: {$meta_flags.default_og_title ? 'TRUE' : 'FALSE'}</li>
+                <li>default_og_description: {$meta_flags.default_og_description ? 'TRUE' : 'FALSE'}</li>
+                <li>default_og_image: {$meta_flags.default_og_image ? 'TRUE' : 'FALSE'}</li>
+                <li>default_og_type: {$meta_flags.default_og_type ? 'TRUE' : 'FALSE'}</li>
+            </ul>
+            {/if}
+            
+            <!-- Para páginas de productos, mostrar información adicional del producto -->
+            {if isset($product)}
+            <h6>Información del Producto:</h6>
+            <ul>
+                <li>ID: {$product.id}</li>
+                <li>Nombre: {$product.name}</li>
+                <li>Slug: {$product.slug}</li>
+            </ul>
+            {/if}
+        </div>
+    </div>
+</div>
+
 {/if}
+
+
+
+
+
+

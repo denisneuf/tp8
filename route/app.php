@@ -11,10 +11,15 @@
 use think\facade\Route;
 
 //Route::get('/', 'Index@index')->middleware('meta');
-
+//->pattern(['slug' => '[a-zA-Z0-9\-]+']); // Solo letras, números y guiones
+//->pattern(['slug' => '.+']); // Permite cualquier carácter (más permisivo)
+//->pattern(['slug' => '[^\/]+']); // Permite cualquier carácter excepto /
+//->pattern(['slug' => '\w+']); // \w+ solo incluye [a-zA-Z0-9_]
 
 Route::get('/','app\controller\Index@index')->middleware('meta');
 Route::get('/marcas/:slug', 'app\controller\Index@brand')->name('brand_info')->pattern(['slug' => '\w+'])->middleware('meta');
+
+Route::get('product/:slug', 'app\controller\Index@product')->name('product_info')->pattern(['slug' => '[^\/]+']); // Detalle de producto por slug
 
 Route::get('/marcas', 'app\controller\Index@brands')->name('brands_info')->middleware('meta');
 

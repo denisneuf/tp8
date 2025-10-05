@@ -20,10 +20,26 @@
     cursor: pointer;
 }
 
+
+
 .menu-title {
     font-weight: 500;
     color: #212529;
+    text-decoration: none;
+    transition: color 0.2s ease; /* Suaviza la transición del color */
 }
+
+/* Hover para los spans (menús con submenú) */
+.menu-item:hover .menu-title {
+
+}
+
+/* Hover para los enlaces (menús sin submenú) */
+.menu-title:hover {
+
+}
+
+
 
 .menu-item:hover .submenu {
     display: flex;
@@ -36,7 +52,7 @@
 
 .submenu {
     position: fixed; /* Usamos fixed para que se alinee al viewport */
-    top: 60px; /* Ajusta según la altura de tu navbar */
+    top: 55px; /* Ajusta según la altura de tu navbar */
     left: 0;
     right: 0;
     width: 100vw;
@@ -110,13 +126,13 @@
 }
 
 .column-links a {
-    text-decoration: none;
     color: #495057;
     font-size: 0.95rem;
+    text-decoration: none;
 }
 
 .column-links a:hover {
-    text-decoration: underline;
+    text-decoration: none;
     color: #0d6efd;
 }
 
@@ -146,7 +162,11 @@
 <ul class="main-menu">
     {foreach $menus as $menu}
     <li class="menu-item">
-        <span class="menu-title">{$menu.title}</span>
+        {if $menu.has_submenu}
+        <span class="menu-title">{$menu.title|raw}</span>
+        {else/}
+        <a href="{$menu.url}" class="menu-title">{$menu.title|raw}</a>
+        {/if}
         {if $menu.has_submenu}
         <div class="submenu">
             {foreach $menu.columns as $column}

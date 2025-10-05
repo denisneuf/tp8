@@ -9,6 +9,7 @@ use app\model\Brand;
 use app\model\Category;
 use app\model\Product;
 use app\model\ProductType;
+use app\service\MetaService;
 
 class Index extends BaseController
 {
@@ -143,13 +144,55 @@ class Index extends BaseController
      */
     public function product(string $slug): View
     {
+        /*
         $product = Product::where('slug', $slug)
             ->where('visible', true)
-            ->with(['brand', 'category', 'productType', 'attributes'])
+            ->with([
+                'brand', 
+                'category', 
+                'productType',
+                'productType.specialFields' => function($query) {
+                    $query->where('visible', true)->order('order', 'asc');
+                }
+            ])
             ->find();
+
+        */
+
+
+
+
+        $product = Product::where('slug', $slug)
+        ->where('visible', true)
+        ->with([
+            'brand', 
+            'category', 
+            'productType.specialFields',
+            'specialValues' // Nueva relación
+        ])
+        ->find();
+
+        // Usar el helper - ¡limpio y simple!
+        //dump(assignProductMeta($product));
+
+        //assignProductMeta($product);
+        // Instanciar el servicio y usarlo
+        $metaService = new MetaService();
+        $metaService->assignProductMeta($product);
+
+        //dump($product);
 
         if (!$product) {
             abort(404, 'Producto no encontrado');
+        }
+
+
+        // Obtener los valores de los campos especiales para este producto
+        /*
+        $specialValues = [];
+        if ($product->product_type_id) {
+            $specialValues = ProductSpecialValue::where('product_id', $product->id)
+                ->column('value', 'special_field_id');
         }
 
         // Productos relacionados
@@ -160,11 +203,14 @@ class Index extends BaseController
             ->with(['brand'])
             ->limit(4)
             ->select();
+        */
 
         return view('/index/product', [
             'menus' => $this->getMenus(),
             'product' => $product,
-            'relatedProducts' => $relatedProducts
+            'lang'  => 'es',
+            //'specialValues' => $specialValues,
+            //'relatedProducts' => $relatedProducts
         ]);
     }
 }

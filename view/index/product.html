@@ -1,0 +1,335 @@
+{include file="index/common/header" /}
+{include file="index/common/alert" /}
+{include file="index/common/menu" /}
+
+<div class="container mt-4">
+    <!-- Migas de pan -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{:url('/')}"><i class="bi bi-house"></i> Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{:url('categories')}">Categorías</a></li>
+            <li class="breadcrumb-item"><a href="{:url('category', ['slug' => $product.category.slug])}">{$product.category.txt_short}</a></li>
+            {if $product.productType}
+            <li class="breadcrumb-item"><a href="#">{$product.productType.txt_short}</a></li>
+            {/if}
+            <li class="breadcrumb-item active">{$product.name}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Columna izquierda - Imágenes del producto -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-images">
+                <!-- Imagen principal -->
+                <div class="main-image mb-3">
+                    <img src="/static/img/product/{$product.pic}" 
+                         alt="{$product.name}" 
+                         class="img-fluid rounded shadow" 
+                         id="mainProductImage"
+                         style="max-height: 500px; object-fit: contain;">
+                </div>
+                
+                <!-- Miniaturas (si hay más imágenes) -->
+                <div class="thumbnails row g-2">
+                    <div class="col-3">
+                        <img src="/static/img/product/{$product.pic}" 
+                             alt="{$product.name}" 
+                             class="img-fluid rounded thumbnail active"
+                             style="cursor: pointer; height: 80px; object-fit: cover;"
+                             onclick="changeMainImage(this)">
+                    </div>
+                    <!-- Aquí podrías añadir más miniaturas si el producto tiene más imágenes -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha - Información del producto -->
+        <div class="col-lg-6">
+            <!-- Marca y categoría -->
+            <div class="mb-3">
+                {if $product.brand}
+                <a href="{:url('brand', ['slug' => $product.brand.slug])}" class="text-decoration-none">
+                    <span class="badge bg-primary me-2">{$product.brand.brand_cn}</span>
+                </a>
+                {/if}
+                {if $product.category}
+                <span class="badge bg-secondary me-2">{$product.category.txt_short}</span>
+                {/if}
+                {if $product.productType}
+                <span class="badge bg-info">{$product.productType.txt_short}</span>
+                {/if}
+            </div>
+
+            <!-- Nombre del producto -->
+            <h1 class="h2 fw-bold mb-3">{$product.name}</h1>
+
+            <!-- Precio -->
+            <div class="price-section mb-4">
+                {if $product.discount_price && $product.discount_price < $product.price}
+                <div class="d-flex align-items-center">
+                    <span class="h3 text-danger fw-bold me-3">€{$product.discount_price}</span>
+                    <span class="h5 text-muted text-decoration-line-through">€{$product.price}</span>
+                    <span class="badge bg-danger ms-2">-{($product.price - $product.discount_price) / $product.price * 100}%</span>
+                </div>
+                {else}
+                <span class="h3 text-primary fw-bold">€{$product.price}</span>
+                {/if}
+            </div>
+
+            <!-- Stock y disponibilidad -->
+            <div class="availability mb-4">
+                {if $product.available && $product.stock > 0}
+                <span class="badge bg-success fs-6">
+                    <i class="bi bi-check-circle me-1"></i>En stock ({$product.stock} unidades)
+                </span>
+                {elseif $product.available && $product.stock <= 0}
+                <span class="badge bg-warning fs-6">
+                    <i class="bi bi-clock me-1"></i>Agotado temporalmente
+                </span>
+                {else}
+                <span class="badge bg-danger fs-6">
+                    <i class="bi bi-x-circle me-1"></i>No disponible
+                </span>
+                {/if}
+            </div>
+
+            <!-- Botones de compra -->
+            <div class="action-buttons mb-4">
+                {if $product.amazonlink && $product.available && $product.stock > 0}
+                <a href="{$product.amazonlink|raw}" 
+                   target="_blank" 
+                   class="btn btn-warning btn-lg me-3"
+                   onclick="trackAmazonClick('{$product.name}')">
+                    <i class="bi bi-amazon me-2"></i>Comprar en Amazon
+                </a>
+                {/if}
+                
+                <button type="button" class="btn btn-outline-primary btn-lg" onclick="addToWishlist({$product.id})">
+                    <i class="bi bi-heart me-2"></i>Guardar
+                </button>
+            </div>
+
+            <!-- Envío y garantía -->
+            <div class="shipping-info mb-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-truck text-success fs-4 me-3"></i>
+                            <div>
+                                <strong>Envío gratis</strong>
+                                <div class="small text-muted">En pedidos superiores a €50</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-shield-check text-primary fs-4 me-3"></i>
+                            <div>
+                                <strong>Garantía</strong>
+                                <div class="small text-muted">2 años de garantía</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Características rápidas -->
+            <div class="quick-features">
+                <h5 class="h6 mb-3">Características principales</h5>
+                <div class="row g-2">
+                    {if $product.manufacturer}
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-building text-muted me-2"></i>
+                            <small><strong>Fabricante:</strong> {$product.manufacturer}</small>
+                        </div>
+                    </div>
+                    {/if}
+                    {if $product.sku}
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-upc-scan text-muted me-2"></i>
+                            <small><strong>SKU:</strong> {$product.sku}</small>
+                        </div>
+                    </div>
+                    {/if}
+                    {if $product.asin}
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-tag text-muted me-2"></i>
+                            <small><strong>ASIN:</strong> {$product.asin}</small>
+                        </div>
+                    </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Descripción y detalles -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <ul class="nav nav-tabs card-header-tabs" id="productTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="description-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#description" type="button" role="tab">
+                                <i class="bi bi-file-text me-2"></i>Descripción
+                            </button>
+                        </li>
+                        {if $product.attributes && count($product.attributes) > 0}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="specs-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#specs" type="button" role="tab">
+                                <i class="bi bi-list-check me-2"></i>Especificaciones
+                            </button>
+                        </li>
+                        {/if}
+                        <!--
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#shipping" type="button" role="tab">
+                                <i class="bi bi-truck me-2"></i>Envío y Devoluciones
+                            </button>
+                        </li>
+                    -->
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="productTabsContent">
+                        <!-- Pestaña Descripción -->
+                        <div class="tab-pane fade show active" id="description" role="tabpanel">
+                            {if $product.description}
+                            <div class="product-description">
+                                {$product.description|raw}
+                            </div>
+                            {else}
+                            <p class="text-muted">No hay descripción disponible para este producto.</p>
+                            {/if}
+                        </div>
+                        {volist name="product.productType.specialFields" id="field"}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between border-bottom pb-2">
+                                <strong>{$field.name}:</strong>
+                                <span>
+                                    {php}$value = $product->specialValues->where('special_field_id', $field->id)->first();{/php}
+                                    {if $value}
+                                        {$value->value}
+                                    {else}
+                                        No especificado
+                                    {/if}
+                                </span>
+                            </div>
+                        </div>
+                        {/volist}
+                        <!-- Pestaña Especificaciones -->
+                        <!-- Pestaña Especificaciones -->
+                        <!--
+                        {if $product.productType && $product.productType.specialFields && count($product.productType.specialFields) > 0}
+                        <div class="tab-pane fade" id="specs" role="tabpanel">
+                            <div class="row">
+                                {volist name="product.productType.specialFields" id="field"}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex justify-content-between border-bottom pb-2">
+                                        <strong>{$field.name}:</strong>
+                                        <span>
+                                            {if isset($specialValues[$field.id]) && $specialValues[$field.id]}
+                                                {$specialValues[$field.id]}
+                                            {else}
+                                                No especificado
+                                            {/if}
+                                        </span>
+                                    </div>
+                                </div>
+                                {/volist}
+                            </div>
+                        </div>
+                        {/if}
+                    -->
+
+                        <!-- Pestaña Envío -->
+                        <!--
+                        <div class="tab-pane fade" id="shipping" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Política de Envío</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check text-success me-2"></i>Envío estándar: 3-5 días</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>Envío express: 1-2 días</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>Envío gratis desde €50</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>Seguimiento incluido</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Política de Devoluciones</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check text-success me-2"></i>30 días para devoluciones</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>Producto debe estar en perfecto estado</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>Reembolso completo</li>
+                                        <li><i class="bi bi-check text-success me-2"></i>Devolución gratuita</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Cambiar imagen principal al hacer clic en miniatura
+function changeMainImage(thumbnail) {
+    const mainImage = document.getElementById('mainProductImage');
+    mainImage.src = thumbnail.src;
+    
+    // Remover clase active de todas las miniaturas
+    document.querySelectorAll('.thumbnail').forEach(thumb => {
+        thumb.classList.remove('active');
+    });
+    
+    // Añadir clase active a la miniatura clickeada
+    thumbnail.classList.add('active');
+}
+
+// Track clicks en enlace de Amazon
+function trackAmazonClick(productName) {
+    // Aquí puedes implementar Google Analytics o tu sistema de tracking
+    console.log('Producto clickeado en Amazon:', productName);
+    
+    // Ejemplo con Google Analytics:
+    // gtag('event', 'click', {
+    //     'event_category': 'Amazon Affiliate',
+    //     'event_label': productName
+    // });
+}
+
+// Añadir a lista de deseos
+function addToWishlist(productId) {
+    // Implementar lógica para añadir a lista de deseos
+    console.log('Añadiendo producto a lista de deseos:', productId);
+    
+    // Mostrar notificación
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show';
+    alert.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>Producto añadido a tu lista de deseos
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
+}
+
+// Inicializar tooltips de Bootstrap
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+{include file="index/common/footer" /}
